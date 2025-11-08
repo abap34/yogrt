@@ -5,7 +5,7 @@ Slide クラスとレンダリングパイプラインを定義。
 """
 
 from typing import Callable
-from .core import Component, Context, render, walk, Transform, HtmlTransform
+from .core import Component, Context, render, walk, Transform, HtmlTransform, Renderer
 
 
 # ============================================================================
@@ -40,7 +40,7 @@ class Slide:
         >>> slide.export("output.html")
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Slide を初期化"""
         self.pages: list[Component] = []
         self.context = Context()
@@ -65,7 +65,7 @@ class Slide:
         self.pages.append(page)
         return self
 
-    def add_renderer(self, tag: str, renderer: Callable) -> 'Slide':
+    def add_renderer(self, tag: str, renderer: Renderer) -> 'Slide':
         """
         カスタムレンダラーを登録
 

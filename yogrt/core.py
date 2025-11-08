@@ -8,7 +8,7 @@ Yogrt Core Module
 - walk: Component 木の走査
 """
 
-from typing import TypedDict, Any, Callable, Protocol
+from typing import TypedDict, Any, Callable, cast
 from dataclasses import dataclass, field
 
 
@@ -48,27 +48,10 @@ class Component(TypedDict, total=False):
     key: str | None
 
 
-class Renderer(Protocol):
-    """
-    レンダラー関数の型
-
-    Component を HTML 文字列に変換する関数のプロトコル。
-    """
-    def __call__(self, component: Component, context: 'Context') -> str:
-        """
-        Component を HTML にレンダリング
-
-        Args:
-            component: レンダリング対象のコンポーネント
-            context: レンダリングコンテキスト
-
-        Returns:
-            HTML文字列
-        """
-        ...
-
-
 # Type aliases
+Renderer = Callable[[Component, 'Context'], str]
+"""Component → HTML の変換関数（レンダラー）"""
+
 Transform = Callable[[Component], Component]
 """Component → Component の変換関数"""
 
@@ -202,7 +185,7 @@ def walk(component: Component, f: Callable[[Component], Component]) -> Component
     new_children = [walk(child, f) for child in children]
 
     # 子要素を更新したコンポーネントを作成
-    new_component = {**component, 'children': new_children}
+    new_component = cast(Component, {**component, 'children': new_children})
 
     # 関数を適用
     return f(new_component)
@@ -289,14 +272,15 @@ def filter_by_tag(root: Component, tag: str) -> list[Component]:
         指定されたタグを持つコンポーネントのリスト
 
     Examples:
-        >>> root: Component = {
+        >>> from typing import cast
+        >>> root = cast(Component, {
         ...     'tag': 'page',
         ...     'props': {},
         ...     'children': [
         ...         {'tag': 'text', 'props': {'content': 'A'}, 'children': []},
         ...         {'tag': 'text', 'props': {'content': 'B'}, 'children': []}
         ...     ]
-        ... }
+        ... })
         >>> texts = filter_by_tag(root, 'text')
         >>> len(texts)
         2

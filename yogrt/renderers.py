@@ -4,7 +4,7 @@ Yogrt Standard Renderers
 標準コンポーネントのレンダラー関数を定義。
 """
 
-from .core import Component, Context, render
+from .core import Component, Context, render, Renderer
 
 
 # ============================================================================
@@ -173,7 +173,9 @@ def render_list(component: Component, context: Context) -> str:
 
 def render_raw_html(component: Component, context: Context) -> str:
     """生HTMLコンポーネントのレンダラー"""
-    return component['props']['html']
+    html = component['props']['html']
+    assert isinstance(html, str)
+    return html
 
 
 def render_spacer(component: Component, context: Context) -> str:
@@ -191,7 +193,7 @@ def render_divider(component: Component, context: Context) -> str:
 # Default Renderers Registry
 # ============================================================================
 
-DEFAULT_RENDERERS = {
+DEFAULT_RENDERERS: dict[str, Renderer] = {
     'text': render_text,
     'header': render_header,
     'image': render_image,

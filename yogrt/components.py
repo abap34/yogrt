@@ -12,7 +12,7 @@ from .core import Component
 # Basic Components
 # ============================================================================
 
-def Text(content: str, **props) -> Component:
+def Text(content: str, **props: Any) -> Component:
     """
     テキストコンポーネント
 
@@ -37,7 +37,7 @@ def Text(content: str, **props) -> Component:
     }
 
 
-def Header(text: str, level: int = 1, **props) -> Component:
+def Header(text: str, level: int = 1, **props: Any) -> Component:
     """
     ヘッダーコンポーネント
 
@@ -65,7 +65,7 @@ def Header(text: str, level: int = 1, **props) -> Component:
     }
 
 
-def Image(src: Any, caption: str | None = None, **props) -> Component:
+def Image(src: Any, caption: str | None = None, **props: Any) -> Component:
     """
     画像コンポーネント
 
@@ -91,7 +91,7 @@ def Image(src: Any, caption: str | None = None, **props) -> Component:
     }
 
 
-def Code(code: str, lang: str = "python", **props) -> Component:
+def Code(code: str, lang: str = "python", **props: Any) -> Component:
     """
     コードブロックコンポーネント
 
@@ -117,7 +117,7 @@ def Code(code: str, lang: str = "python", **props) -> Component:
     }
 
 
-def Link(url: str, text: str, **props) -> Component:
+def Link(url: str, text: str, **props: Any) -> Component:
     """
     リンクコンポーネント
 
@@ -145,7 +145,7 @@ def Link(url: str, text: str, **props) -> Component:
 # Container Components
 # ============================================================================
 
-def Page(*children: Component, **props) -> Component:
+def Page(*children: Component, **props: Any) -> Component:
     """
     ページコンポーネント
 
@@ -175,7 +175,7 @@ def Page(*children: Component, **props) -> Component:
     }
 
 
-def VStack(*children: Component, gap: str = "1rem", **props) -> Component:
+def VStack(*children: Component, gap: str = "1rem", **props: Any) -> Component:
     """
     垂直スタックレイアウト
 
@@ -207,7 +207,7 @@ def VStack(*children: Component, gap: str = "1rem", **props) -> Component:
     }
 
 
-def HStack(*children: Component, gap: str = "1rem", **props) -> Component:
+def HStack(*children: Component, gap: str = "1rem", **props: Any) -> Component:
     """
     水平スタックレイアウト
 
@@ -237,7 +237,7 @@ def HStack(*children: Component, gap: str = "1rem", **props) -> Component:
     }
 
 
-def TwoColumn(left: Component, right: Component, **props) -> Component:
+def TwoColumn(left: Component, right: Component, **props: Any) -> Component:
     """
     2カラムレイアウト
 
@@ -268,7 +268,7 @@ def TwoColumn(left: Component, right: Component, **props) -> Component:
     }
 
 
-def Grid(*children: Component, columns: int = 2, gap: str = "1rem", **props) -> Component:
+def Grid(*children: Component, columns: int = 2, gap: str = "1rem", **props: Any) -> Component:
     """
     グリッドレイアウト
 
@@ -298,7 +298,7 @@ def Grid(*children: Component, columns: int = 2, gap: str = "1rem", **props) -> 
     }
 
 
-def Container(*children: Component, **props) -> Component:
+def Container(*children: Component, **props: Any) -> Component:
     """
     汎用コンテナ
 
@@ -331,7 +331,7 @@ def Container(*children: Component, **props) -> Component:
 # List Components
 # ============================================================================
 
-def List(*items: str | Component, ordered: bool = False, **props) -> Component:
+def List(*items: str | Component, ordered: bool = False, **props: Any) -> Component:
     """
     リストコンポーネント
 
@@ -373,7 +373,7 @@ def List(*items: str | Component, ordered: bool = False, **props) -> Component:
 # Special Components
 # ============================================================================
 
-def RawHtml(html: str, **props) -> Component:
+def RawHtml(html: str, **props: Any) -> Component:
     """
     生HTMLコンポーネント
 
@@ -400,7 +400,7 @@ def RawHtml(html: str, **props) -> Component:
     }
 
 
-def Spacer(height: str = "1rem", **props) -> Component:
+def Spacer(height: str = "1rem", **props: Any) -> Component:
     """
     スペーサーコンポーネント
 
@@ -425,7 +425,7 @@ def Spacer(height: str = "1rem", **props) -> Component:
     }
 
 
-def Divider(**props) -> Component:
+def Divider(**props: Any) -> Component:
     """
     区切り線コンポーネント
 
