@@ -10,9 +10,24 @@ Defines minimal primitives with independent component classes:
 - walk: Component tree traversal
 """
 
-from typing import Any, Callable, Protocol, Union, runtime_checkable
+from typing import Any, Callable, Protocol, Union, runtime_checkable, Mapping
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
+
+
+# ============================================================================
+# Type Aliases
+# ============================================================================
+
+# Forward references for type aliases
+Renderer = Callable[['Component', 'Context'], str]
+"""Renderer function type: (Component, Context) -> HTML string"""
+
+Transform = Callable[['Component'], 'Component']
+"""Transform function type: Component -> Component"""
+
+HtmlTransform = Callable[[str], str]
+"""HTML transform function type: HTML string -> HTML string"""
 
 
 # ============================================================================
@@ -565,19 +580,20 @@ def walk(component: Component, f: Callable[[Component], Component]) -> Component
     """
     from dataclasses import replace
 
-    # Check if component has children
-    if hasattr(component, 'children'):
+    # Handle TwoColumnComponent specially (has left/right instead of children)
+    if isinstance(component, TwoColumnComponent):
+        new_left = walk(component.left, f)
+        new_right = walk(component.right, f)
+        new_component = replace(component, left=new_left, right=new_right)
+        return f(new_component)
+
+    # Check if component has children attribute
+    elif hasattr(component, 'children'):
         # Recursively walk children
         new_children = tuple(walk(child, f) for child in component.children)
-
-        # Handle TwoColumnComponent specially (has left/right instead of children tuple)
-        if isinstance(component, TwoColumnComponent):
-            new_component = replace(component, left=new_children[0], right=new_children[1])
-        else:
-            new_component = replace(component, children=new_children)
-
-        # Apply function to updated component
+        new_component = replace(component, children=new_children)  # type: ignore[assignment,arg-type]
         return f(new_component)
+
     else:
         # Leaf component - just apply function
         return f(component)

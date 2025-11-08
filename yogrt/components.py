@@ -1,7 +1,7 @@
 """
 Yogrt Standard Components
 
-Defines standard component factory functions with type-safe return types.
+Factory functions for creating standard components with type-safe return types.
 """
 
 from typing import Any
@@ -12,6 +12,12 @@ from .core import (
     ImageComponent,
     CodeComponent,
     LinkComponent,
+    SpacerComponent,
+    DividerComponent,
+    RawHtmlComponent,
+    FootnoteRefComponent,
+    FootnoteComponent,
+    CitationComponent,
     PageComponent,
     VStackComponent,
     HStackComponent,
@@ -19,152 +25,227 @@ from .core import (
     GridComponent,
     ContainerComponent,
     ListComponent,
-    RawHtmlComponent,
-    SpacerComponent,
-    DividerComponent,
+    TOCComponent,
+    BibliographyComponent,
 )
 
 
 # ============================================================================
-# Basic Components
+# Leaf Components
 # ============================================================================
 
-def Text(content: str, **props: Any) -> TextComponent:
+def Text(content: str, class_name: str = "", **kwargs: Any) -> TextComponent:
     """
     Text component
 
     Args:
         content: Text to display
-        **props: Additional properties
+        class_name: CSS class name
+        **kwargs: Additional keyword arguments (key)
 
     Returns:
         TextComponent
-
-    Examples:
-        >>> text = Text("Hello, world!")
-        >>> text.tag
-        'text'
-        >>> text.props['content']
-        'Hello, world!'
-        >>> isinstance(text, TextComponent)
-        True
     """
     return TextComponent(
-        tag='text',
-        props={'content': content, **props},
-        children=()
+        content=content,
+        class_name=class_name,
+        key=kwargs.get('key')
     )
 
 
-def Header(text: str, level: int = 1, **props: Any) -> HeaderComponent:
+def Header(text: str, level: int = 1, id: str = "", class_name: str = "", **kwargs: Any) -> HeaderComponent:
     """
     Header component
 
     Args:
         text: Header text
         level: Heading level (1-6)
-        **props: Additional properties (id, class, etc.)
+        id: Element ID for linking
+        class_name: CSS class name
+        **kwargs: Additional keyword arguments (key)
 
     Returns:
         HeaderComponent
-
-    Examples:
-        >>> header = Header("Introduction", level=2, id="intro")
-        >>> header.tag
-        'header'
-        >>> header.props['level']
-        2
-        >>> header.props['id']
-        'intro'
-        >>> isinstance(header, HeaderComponent)
-        True
     """
     return HeaderComponent(
-        tag='header',
-        props={'text': text, 'level': level, **props},
-        children=()
+        text=text,
+        level=level,
+        id=id,
+        class_name=class_name,
+        key=kwargs.get('key')
     )
 
 
-def Image(src: Any, caption: str | None = None, **props: Any) -> ImageComponent:
+def Image(src: Any, alt: str = "", caption: str = "", width: str = "", height: str = "", **kwargs: Any) -> ImageComponent:
     """
     Image component
 
     Args:
-        src: Image source (file path, URL, matplotlib Figure, etc.)
-        caption: Caption (optional)
-        **props: Additional properties
+        src: Image source (file path, URL, matplotlib Figure)
+        alt: Alt text
+        caption: Image caption
+        width: Image width
+        height: Image height
+        **kwargs: Additional keyword arguments (key)
 
     Returns:
         ImageComponent
-
-    Examples:
-        >>> img = Image("photo.jpg", caption="A beautiful sunset")
-        >>> img.tag
-        'image'
-        >>> img.props['caption']
-        'A beautiful sunset'
-        >>> isinstance(img, ImageComponent)
-        True
     """
     return ImageComponent(
-        tag='image',
-        props={'src': src, 'caption': caption, **props},
-        children=()
+        src=src,
+        alt=alt,
+        caption=caption,
+        width=width,
+        height=height,
+        key=kwargs.get('key')
     )
 
 
-def Code(code: str, lang: str = "python", **props: Any) -> CodeComponent:
+def Code(code: str, lang: str = "python", line_numbers: bool = False, **kwargs: Any) -> CodeComponent:
     """
     Code block component
 
     Args:
         code: Code string
         lang: Programming language
-        **props: Additional properties
+        line_numbers: Show line numbers
+        **kwargs: Additional keyword arguments (key)
 
     Returns:
         CodeComponent
-
-    Examples:
-        >>> code = Code("print('Hello')", lang="python")
-        >>> code.tag
-        'code'
-        >>> code.props['lang']
-        'python'
-        >>> isinstance(code, CodeComponent)
-        True
     """
     return CodeComponent(
-        tag='code',
-        props={'code': code, 'lang': lang, **props},
-        children=()
+        code=code,
+        lang=lang,
+        line_numbers=line_numbers,
+        key=kwargs.get('key')
     )
 
 
-def Link(url: str, text: str, **props: Any) -> LinkComponent:
+def Link(href: str, text: str, target: str = "_blank", **kwargs: Any) -> LinkComponent:
     """
     Link component
 
     Args:
-        url: Link destination URL
-        text: Display text
-        **props: Additional properties
+        href: URL destination
+        text: Link text
+        target: Link target
+        **kwargs: Additional keyword arguments (key)
 
     Returns:
         LinkComponent
-
-    Examples:
-        >>> link = Link("https://example.com", "Visit Example")
-        >>> link.props['url']
-        'https://example.com'
-        >>> isinstance(link, LinkComponent)
-        True
     """
     return LinkComponent(
-        tag='link',
-        props={'url': url, 'text': text, **props},
-        children=()
+        text=text,
+        href=href,
+        target=target,
+        key=kwargs.get('key')
+    )
+
+
+def Spacer(height: str = "1rem", **kwargs: Any) -> SpacerComponent:
+    """
+    Spacer component
+
+    Args:
+        height: Height of spacer
+        **kwargs: Additional keyword arguments (key)
+
+    Returns:
+        SpacerComponent
+    """
+    return SpacerComponent(
+        height=height,
+        key=kwargs.get('key')
+    )
+
+
+def Divider(color: str = "#e5e7eb", thickness: str = "1px", **kwargs: Any) -> DividerComponent:
+    """
+    Divider component
+
+    Args:
+        color: Divider color
+        thickness: Divider thickness
+        **kwargs: Additional keyword arguments (key)
+
+    Returns:
+        DividerComponent
+    """
+    return DividerComponent(
+        color=color,
+        thickness=thickness,
+        key=kwargs.get('key')
+    )
+
+
+def RawHtml(html: str, **kwargs: Any) -> RawHtmlComponent:
+    """
+    Raw HTML component
+
+    Args:
+        html: Raw HTML string
+        **kwargs: Additional keyword arguments (key)
+
+    Returns:
+        RawHtmlComponent
+    """
+    return RawHtmlComponent(
+        html=html,
+        key=kwargs.get('key')
+    )
+
+
+def FootnoteRef(note_id: str, **kwargs: Any) -> FootnoteRefComponent:
+    """
+    Footnote reference component
+
+    Args:
+        note_id: Footnote identifier
+        **kwargs: Additional keyword arguments (key)
+
+    Returns:
+        FootnoteRefComponent
+    """
+    return FootnoteRefComponent(
+        note_id=note_id,
+        key=kwargs.get('key')
+    )
+
+
+def Footnote(note_id: str, content: str, **kwargs: Any) -> FootnoteComponent:
+    """
+    Footnote content component
+
+    Args:
+        note_id: Footnote identifier
+        content: Footnote text
+        **kwargs: Additional keyword arguments (key)
+
+    Returns:
+        FootnoteComponent
+    """
+    return FootnoteComponent(
+        note_id=note_id,
+        content=content,
+        key=kwargs.get('key')
+    )
+
+
+def Citation(cite_key: str, **kwargs: Any) -> CitationComponent:
+    """
+    Citation component (bibtex reference)
+
+    Args:
+        cite_key: Bibtex citation key
+        **kwargs: Additional keyword arguments (key)
+
+    Returns:
+        CitationComponent
+    """
+    return CitationComponent(
+        cite_key=cite_key,
+        key=kwargs.get('key')
     )
 
 
@@ -172,323 +253,194 @@ def Link(url: str, text: str, **props: Any) -> LinkComponent:
 # Container Components
 # ============================================================================
 
-def Page(*children: Component, **props: Any) -> PageComponent:
+def Page(*children: Component, class_name: str = "", **kwargs: Any) -> PageComponent:
     """
     Page component
 
-    Represents one page of a slide.
-
     Args:
         *children: Child components
-        **props: Additional properties
+        class_name: CSS class name
+        **kwargs: Additional keyword arguments (key)
 
     Returns:
         PageComponent
-
-    Examples:
-        >>> page = Page(
-        ...     Header("Title", level=1),
-        ...     Text("Content")
-        ... )
-        >>> page.tag
-        'page'
-        >>> len(page.children)
-        2
-        >>> isinstance(page, PageComponent)
-        True
     """
     return PageComponent(
-        tag='page',
-        props=props,
-        children=children
+        children=children,
+        class_name=class_name,
+        key=kwargs.get('key')
     )
 
 
-def VStack(*children: Component, gap: str = "1rem", **props: Any) -> VStackComponent:
+def VStack(*children: Component, gap: str = "1rem", align: str = "left", **kwargs: Any) -> VStackComponent:
     """
     Vertical stack layout
 
-    Arranges child elements vertically.
-
     Args:
         *children: Child components
-        gap: Spacing between children
-        **props: Additional properties
+        gap: Gap between children
+        align: Alignment (left, center, right)
+        **kwargs: Additional keyword arguments (key)
 
     Returns:
         VStackComponent
-
-    Examples:
-        >>> stack = VStack(
-        ...     Text("First"),
-        ...     Text("Second"),
-        ...     gap="2rem"
-        ... )
-        >>> stack.tag
-        'vstack'
-        >>> stack.props['gap']
-        '2rem'
-        >>> isinstance(stack, VStackComponent)
-        True
     """
     return VStackComponent(
-        tag='vstack',
-        props={'gap': gap, **props},
-        children=children
+        children=children,
+        gap=gap,
+        align=align,
+        key=kwargs.get('key')
     )
 
 
-def HStack(*children: Component, gap: str = "1rem", **props: Any) -> HStackComponent:
+def HStack(*children: Component, gap: str = "1rem", align: str = "center", **kwargs: Any) -> HStackComponent:
     """
     Horizontal stack layout
 
-    Arranges child elements horizontally.
-
     Args:
         *children: Child components
-        gap: Spacing between children
-        **props: Additional properties
+        gap: Gap between children
+        align: Alignment (top, center, bottom)
+        **kwargs: Additional keyword arguments (key)
 
     Returns:
         HStackComponent
-
-    Examples:
-        >>> stack = HStack(
-        ...     Text("Left"),
-        ...     Text("Right"),
-        ...     gap="1rem"
-        ... )
-        >>> stack.tag
-        'hstack'
-        >>> isinstance(stack, HStackComponent)
-        True
     """
     return HStackComponent(
-        tag='hstack',
-        props={'gap': gap, **props},
-        children=children
+        children=children,
+        gap=gap,
+        align=align,
+        key=kwargs.get('key')
     )
 
 
-def TwoColumn(left: Component, right: Component, **props: Any) -> TwoColumnComponent:
+def TwoColumn(left: Component, right: Component, ratio: str = "1:1", gap: str = "2rem", **kwargs: Any) -> TwoColumnComponent:
     """
     Two-column layout
 
-    Places elements left and right.
-
     Args:
-        left: Left component
-        right: Right component
-        **props: Additional properties
+        left: Left column component
+        right: Right column component
+        ratio: Column width ratio
+        gap: Gap between columns
+        **kwargs: Additional keyword arguments (key)
 
     Returns:
         TwoColumnComponent
-
-    Examples:
-        >>> layout = TwoColumn(
-        ...     Text("Left content"),
-        ...     Text("Right content")
-        ... )
-        >>> layout.tag
-        'two-column'
-        >>> len(layout.children)
-        2
-        >>> isinstance(layout, TwoColumnComponent)
-        True
     """
     return TwoColumnComponent(
-        tag='two-column',
-        props=props,
-        children=(left, right)
+        left=left,
+        right=right,
+        ratio=ratio,
+        gap=gap,
+        key=kwargs.get('key')
     )
 
 
-def Grid(*children: Component, columns: int = 2, gap: str = "1rem", **props: Any) -> GridComponent:
+def Grid(*children: Component, columns: int = 2, gap: str = "1rem", **kwargs: Any) -> GridComponent:
     """
     Grid layout
-
-    Arranges child elements in a grid.
 
     Args:
         *children: Child components
         columns: Number of columns
-        gap: Grid spacing
-        **props: Additional properties
+        gap: Gap between items
+        **kwargs: Additional keyword arguments (key)
 
     Returns:
         GridComponent
-
-    Examples:
-        >>> grid = Grid(
-        ...     Text("1"), Text("2"), Text("3"), Text("4"),
-        ...     columns=2
-        ... )
-        >>> grid.props['columns']
-        2
-        >>> isinstance(grid, GridComponent)
-        True
     """
     return GridComponent(
-        tag='grid',
-        props={'columns': columns, 'gap': gap, **props},
-        children=children
+        children=children,
+        columns=columns,
+        gap=gap,
+        key=kwargs.get('key')
     )
 
 
-def Container(*children: Component, **props: Any) -> ContainerComponent:
+def Container(*children: Component, class_name: str = "", style: str = "", **kwargs: Any) -> ContainerComponent:
     """
     Generic container
 
-    Groups child elements.
-
     Args:
         *children: Child components
-        **props: Additional properties
+        class_name: CSS class name
+        style: Inline CSS style
+        **kwargs: Additional keyword arguments (key)
 
     Returns:
         ContainerComponent
-
-    Examples:
-        >>> container = Container(
-        ...     Text("Item 1"),
-        ...     Text("Item 2"),
-        ...     class_name="my-container"
-        ... )
-        >>> container.tag
-        'container'
-        >>> isinstance(container, ContainerComponent)
-        True
     """
     return ContainerComponent(
-        tag='container',
-        props=props,
-        children=children
+        children=children,
+        class_name=class_name,
+        style=style,
+        key=kwargs.get('key')
     )
 
 
-# ============================================================================
-# List Components
-# ============================================================================
-
-def List(*items: str | Component, ordered: bool = False, **props: Any) -> ListComponent:
+def List(*items: str | Component, ordered: bool = False, **kwargs: Any) -> ListComponent:
     """
     List component
 
     Args:
-        *items: List items (strings or Components)
-        ordered: Whether it's an ordered list
-        **props: Additional properties
+        *items: List items (strings or components)
+        ordered: Use ordered list (ol) vs unordered (ul)
+        **kwargs: Additional keyword arguments (key)
 
     Returns:
         ListComponent
-
-    Examples:
-        >>> lst = List("Item 1", "Item 2", "Item 3")
-        >>> lst.tag
-        'list'
-        >>> len(lst.children)
-        3
-        >>> isinstance(lst, ListComponent)
-        True
-
-        >>> lst_ordered = List("First", "Second", ordered=True)
-        >>> lst_ordered.props['ordered']
-        True
     """
-    # Convert strings to Text components
-    children: list[Component] = []
-    for item in items:
-        if isinstance(item, str):
-            children.append(Text(item))
-        else:
-            children.append(item)
+    # Convert string items to Text components
+    children = tuple(
+        Text(item) if isinstance(item, str) else item
+        for item in items
+    )
 
     return ListComponent(
-        tag='list',
-        props={'ordered': ordered, **props},
-        children=tuple(children)
+        children=children,
+        ordered=ordered,
+        key=kwargs.get('key')
     )
 
 
-# ============================================================================
-# Special Components
-# ============================================================================
+# Alias for backwards compatibility
+ListComp = List
 
-def RawHtml(html: str, **props: Any) -> RawHtmlComponent:
+
+def TOC(max_level: int = 3, title: str = "Table of Contents", **kwargs: Any) -> TOCComponent:
     """
-    Raw HTML component
-
-    Directly inserts HTML.
+    Table of Contents component (auto-generated)
 
     Args:
-        html: HTML string
-        **props: Additional properties
+        max_level: Maximum header level to include
+        title: TOC title
+        **kwargs: Additional keyword arguments (key)
 
     Returns:
-        RawHtmlComponent
-
-    Examples:
-        >>> raw = RawHtml("<div class='custom'>Custom HTML</div>")
-        >>> raw.tag
-        'raw-html'
-        >>> raw.props['html']
-        '<div class=\\'custom\\'>Custom HTML</div>'
-        >>> isinstance(raw, RawHtmlComponent)
-        True
+        TOCComponent
     """
-    return RawHtmlComponent(
-        tag='raw-html',
-        props={'html': html, **props},
-        children=()
+    return TOCComponent(
+        max_level=max_level,
+        title=title,
+        key=kwargs.get('key')
     )
 
 
-def Spacer(height: str = "1rem", **props: Any) -> SpacerComponent:
+def Bibliography(title: str = "References", style: str = "default", **kwargs: Any) -> BibliographyComponent:
     """
-    Spacer component
-
-    Inserts empty space.
+    Bibliography component (renders citations)
 
     Args:
-        height: Height of the space
-        **props: Additional properties
+        title: Bibliography title
+        style: Citation style
+        **kwargs: Additional keyword arguments (key)
 
     Returns:
-        SpacerComponent
-
-    Examples:
-        >>> spacer = Spacer(height="2rem")
-        >>> spacer.props['height']
-        '2rem'
-        >>> isinstance(spacer, SpacerComponent)
-        True
+        BibliographyComponent
     """
-    return SpacerComponent(
-        tag='spacer',
-        props={'height': height, **props},
-        children=()
-    )
-
-
-def Divider(**props: Any) -> DividerComponent:
-    """
-    Divider component
-
-    Args:
-        **props: Additional properties
-
-    Returns:
-        DividerComponent
-
-    Examples:
-        >>> divider = Divider()
-        >>> divider.tag
-        'divider'
-        >>> isinstance(divider, DividerComponent)
-        True
-    """
-    return DividerComponent(
-        tag='divider',
-        props=props,
-        children=()
+    return BibliographyComponent(
+        title=title,
+        style=style,
+        key=kwargs.get('key')
     )

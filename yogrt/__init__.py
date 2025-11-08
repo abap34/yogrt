@@ -1,7 +1,7 @@
 """
 Yogrt - Programmable Slide Framework
 
-A Lisp-inspired slide framework with concise design and infinite extensibility.
+A Lisp-inspired slide framework with independent component classes.
 
 Examples:
     >>> from yogrt import create_slide, Page, Header, Text
@@ -17,12 +17,27 @@ __version__ = "0.1.0"
 
 # Core exports
 from .core import (
+    # Type aliases
+    Renderer,
+    Transform,
+    HtmlTransform,
+    # Core types
     Component,
+    ComponentProtocol,
+    Context,
+    # Leaf Components
     TextComponent,
     HeaderComponent,
     ImageComponent,
     CodeComponent,
     LinkComponent,
+    SpacerComponent,
+    DividerComponent,
+    RawHtmlComponent,
+    FootnoteRefComponent,
+    FootnoteComponent,
+    CitationComponent,
+    # Container Components
     PageComponent,
     VStackComponent,
     HStackComponent,
@@ -30,13 +45,9 @@ from .core import (
     GridComponent,
     ContainerComponent,
     ListComponent,
-    RawHtmlComponent,
-    SpacerComponent,
-    DividerComponent,
-    Context,
-    Renderer,
-    Transform,
-    HtmlTransform,
+    TOCComponent,
+    BibliographyComponent,
+    # Core functions
     render,
     transform,
     walk,
@@ -50,25 +61,29 @@ from .slide import Slide, Plugin
 
 # Component exports
 from .components import (
-    # Basic
+    # Leaf components
     Text,
     Header,
     Image,
     Code,
     Link,
-    # Containers
+    Spacer,
+    Divider,
+    RawHtml,
+    FootnoteRef,
+    Footnote,
+    Citation,
+    # Container components
     Page,
     VStack,
     HStack,
     TwoColumn,
     Grid,
     Container,
-    # Lists
     List,
-    # Special
-    RawHtml,
-    Spacer,
-    Divider,
+    ListComp,  # Alias
+    TOC,
+    Bibliography,
 )
 
 # Renderer exports
@@ -109,14 +124,27 @@ def create_slide() -> Slide:
 __all__ = [
     # Version
     '__version__',
-    # Core
+    # Type aliases
+    'Renderer',
+    'Transform',
+    'HtmlTransform',
+    # Core types
     'Component',
-    # Component Types
+    'ComponentProtocol',
+    'Context',
+    # Leaf Component Types
     'TextComponent',
     'HeaderComponent',
     'ImageComponent',
     'CodeComponent',
     'LinkComponent',
+    'SpacerComponent',
+    'DividerComponent',
+    'RawHtmlComponent',
+    'FootnoteRefComponent',
+    'FootnoteComponent',
+    'CitationComponent',
+    # Container Component Types
     'PageComponent',
     'VStackComponent',
     'HStackComponent',
@@ -124,14 +152,9 @@ __all__ = [
     'GridComponent',
     'ContainerComponent',
     'ListComponent',
-    'RawHtmlComponent',
-    'SpacerComponent',
-    'DividerComponent',
-    # Core types and functions
-    'Context',
-    'Renderer',
-    'Transform',
-    'HtmlTransform',
+    'TOCComponent',
+    'BibliographyComponent',
+    # Core functions
     'render',
     'transform',
     'walk',
@@ -142,25 +165,29 @@ __all__ = [
     'Slide',
     'Plugin',
     'create_slide',
-    # Component Factory Functions - Basic
+    # Component Factory Functions - Leaf
     'Text',
     'Header',
     'Image',
     'Code',
     'Link',
-    # Component Factory Functions - Containers
+    'Spacer',
+    'Divider',
+    'RawHtml',
+    'FootnoteRef',
+    'Footnote',
+    'Citation',
+    # Component Factory Functions - Container
     'Page',
     'VStack',
     'HStack',
     'TwoColumn',
     'Grid',
     'Container',
-    # Component Factory Functions - Lists
     'List',
-    # Component Factory Functions - Special
-    'RawHtml',
-    'Spacer',
-    'Divider',
+    'ListComp',
+    'TOC',
+    'Bibliography',
     # Renderers
     'DEFAULT_RENDERERS',
 ]

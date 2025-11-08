@@ -27,16 +27,15 @@ def test_text_component() -> None:
     comp = Text("Hello, world!")
 
     assert comp.tag == 'text'
-    assert comp.props['content'] == 'Hello, world!'
-    assert comp.children == ()
+    assert comp.content == 'Hello, world!'
 
 
 def test_text_component_with_props() -> None:
     """Test Text with additional props"""
     comp = Text("Hello", class_name="my-class")
 
-    assert comp.props['content'] == 'Hello'
-    assert comp.props['class_name'] == 'my-class'
+    assert comp.content == 'Hello'
+    assert comp.class_name == 'my-class'
 
 
 def test_header_component() -> None:
@@ -44,9 +43,9 @@ def test_header_component() -> None:
     comp = Header("Title", level=2, id="my-title")
 
     assert comp.tag == 'header'
-    assert comp.props['text'] == 'Title'
-    assert comp.props['level'] == 2
-    assert comp.props['id'] == 'my-title'
+    assert comp.text == 'Title'
+    assert comp.level == 2
+    assert comp.id == 'my-title'
 
 
 def test_image_component() -> None:
@@ -54,8 +53,8 @@ def test_image_component() -> None:
     comp = Image("photo.jpg", caption="A photo")
 
     assert comp.tag == 'image'
-    assert comp.props['src'] == 'photo.jpg'
-    assert comp.props['caption'] == 'A photo'
+    assert comp.src == 'photo.jpg'
+    assert comp.caption == 'A photo'
 
 
 def test_code_component() -> None:
@@ -64,8 +63,8 @@ def test_code_component() -> None:
     comp = Code(code_str, lang="python")
 
     assert comp.tag == 'code'
-    assert comp.props['code'] == code_str
-    assert comp.props['lang'] == 'python'
+    assert comp.code == code_str
+    assert comp.lang == 'python'
 
 
 def test_link_component() -> None:
@@ -73,8 +72,8 @@ def test_link_component() -> None:
     comp = Link("https://example.com", "Example")
 
     assert comp.tag == 'link'
-    assert comp.props['url'] == 'https://example.com'
-    assert comp.props['text'] == 'Example'
+    assert comp.href == 'https://example.com'
+    assert comp.text == 'Example'
 
 
 def test_page_component() -> None:
@@ -98,7 +97,7 @@ def test_vstack_component() -> None:
     comp = VStack(child1, child2, gap="2rem")
 
     assert comp.tag == 'vstack'
-    assert comp.props['gap'] == '2rem'
+    assert comp.gap == '2rem'
     assert len(comp.children) == 2
 
 
@@ -110,7 +109,7 @@ def test_hstack_component() -> None:
     comp = HStack(child1, child2)
 
     assert comp.tag == 'hstack'
-    assert comp.props['gap'] == '1rem'  # default
+    assert comp.gap == '1rem'  # default
     assert len(comp.children) == 2
 
 
@@ -134,8 +133,8 @@ def test_grid_component() -> None:
     comp = Grid(*items, columns=2, gap="1rem")
 
     assert comp.tag == 'grid'
-    assert comp.props['columns'] == 2
-    assert comp.props['gap'] == '1rem'
+    assert comp.columns == 2
+    assert comp.gap == '1rem'
     assert len(comp.children) == 4
 
 
@@ -147,7 +146,7 @@ def test_container_component() -> None:
 
     assert comp.tag == 'container'
     assert len(comp.children) == 1
-    assert comp.props['class_name'] == 'my-container'
+    assert comp.class_name == 'my-container'
 
 
 def test_list_component() -> None:
@@ -155,19 +154,19 @@ def test_list_component() -> None:
     comp = ListComp("Item 1", "Item 2", "Item 3")
 
     assert comp.tag == 'list'
-    assert comp.props['ordered'] is False
+    assert comp.ordered is False
     assert len(comp.children) == 3
 
     # Check that strings were converted to Text components
     assert comp.children[0].tag == 'text'
-    assert comp.children[0].props['content'] == 'Item 1'
+    assert comp.children[0].content == 'Item 1'  # type: ignore[union-attr]
 
 
 def test_list_component_ordered() -> None:
     """Test List component with ordered=True"""
     comp = ListComp("First", "Second", ordered=True)
 
-    assert comp.props['ordered'] is True
+    assert comp.ordered is True
 
 
 def test_list_component_with_components() -> None:
@@ -188,7 +187,7 @@ def test_raw_html_component() -> None:
     comp = RawHtml(html)
 
     assert comp.tag == 'raw-html'
-    assert comp.props['html'] == html
+    assert comp.html == html
 
 
 def test_spacer_component() -> None:
@@ -196,7 +195,7 @@ def test_spacer_component() -> None:
     comp = Spacer(height="3rem")
 
     assert comp.tag == 'spacer'
-    assert comp.props['height'] == '3rem'
+    assert comp.height == '3rem'
 
 
 def test_divider_component() -> None:
@@ -222,10 +221,10 @@ def test_render_text() -> None:
 
 def test_render_text_with_class() -> None:
     """Test text renderer with class"""
-    comp = Component(
-        tag='text',
-        props={'content': 'Hello', 'class': 'my-class'},
-        children=()
+    from yogrt.core import TextComponent
+    comp = TextComponent(
+        content='Hello',
+        class_name='my-class'
     )
     ctx = Context()
 
@@ -456,7 +455,7 @@ def test_components_and_renderers_integration() -> None:
     )
 
     # Create context with all default renderers
-    ctx = Context(renderers=DEFAULT_RENDERERS)
+    ctx = Context(renderers=DEFAULT_RENDERERS)  # type: ignore[arg-type]
 
     # Render
     result = core_render(page, ctx)
@@ -503,7 +502,7 @@ def test_nested_layouts() -> None:
         )
     )
 
-    ctx = Context(renderers=DEFAULT_RENDERERS)
+    ctx = Context(renderers=DEFAULT_RENDERERS)  # type: ignore[arg-type]
     result = core_render(page, ctx)
 
     # Verify nesting works

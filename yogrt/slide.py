@@ -249,7 +249,8 @@ class Slide:
         Returns:
             Complete HTML document
         """
-        css = self.context.store.get('custom_css', '')
+        # Custom CSS can be added via html_transforms
+        css = ''
 
         return f"""<!DOCTYPE html>
 <html lang="en">

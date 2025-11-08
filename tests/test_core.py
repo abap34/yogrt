@@ -12,6 +12,9 @@ from yogrt.core import (
     filter_by_tag,
     map_components,
     default_renderer,
+    TextComponent,
+    HeaderComponent,
+    PageComponent,
 )
 
 
@@ -19,42 +22,24 @@ from yogrt.core import (
 @pytest.fixture
 def simple_text_component() -> Component:
     """Simple text component for testing"""
-    return Component(
-        tag='text',
-        props={'content': 'Hello'},
-        children=()
-    )
+    return TextComponent(content='Hello')
 
 
 @pytest.fixture
 def nested_component() -> Component:
     """Nested component for testing"""
-    header = Component(
-        tag='header',
-        props={'text': 'Title', 'level': 1},
-        children=()
-    )
-    text = Component(
-        tag='text',
-        props={'content': 'Content'},
-        children=()
-    )
-    return Component(
-        tag='page',
-        props={},
-        children=(header, text)
-    )
+    header = HeaderComponent(text='Title', level=1)
+    text = TextComponent(content='Content')
+    return PageComponent(children=(header, text))
 
 
 # Test Component type
 def test_component_structure(simple_text_component: Component) -> None:
     """Test that Component has correct structure"""
     assert hasattr(simple_text_component, 'tag')
-    assert hasattr(simple_text_component, 'props')
-    assert hasattr(simple_text_component, 'children')
     assert simple_text_component.tag == 'text'
-    assert simple_text_component.props['content'] == 'Hello'
-    assert simple_text_component.children == ()
+    assert isinstance(simple_text_component, TextComponent)
+    assert simple_text_component.content == 'Hello'
 
 
 # Test Context
@@ -62,9 +47,11 @@ def test_context_creation() -> None:
     """Test Context initialization"""
     ctx = Context()
     assert ctx.renderers == {}
-    assert ctx.store == {}
-    assert ctx.current_page == 0
-    assert ctx.total_pages == 0
+    assert ctx.current_page == 1
+    assert ctx.total_pages == 1
+    assert ctx.footnotes == {}
+    assert ctx.citations == {}
+    assert ctx.headers == []
 
 
 def test_context_get_renderer() -> None:
@@ -86,7 +73,8 @@ def test_context_get_renderer() -> None:
 def test_render_with_custom_renderer(simple_text_component: Component) -> None:
     """Test render function with custom renderer"""
     def text_renderer(comp: Component, ctx: Context) -> str:
-        return f"<p>{comp.props['content']}</p>"
+        assert isinstance(comp, TextComponent)
+        return f"<p>{comp.content}</p>"
 
     ctx = Context(renderers={'text': text_renderer})
     result = render(simple_text_component, ctx)
@@ -97,14 +85,15 @@ def test_render_with_custom_renderer(simple_text_component: Component) -> None:
 def test_render_nested_component(nested_component: Component) -> None:
     """Test render function with nested components"""
     def header_renderer(comp: Component, ctx: Context) -> str:
-        level = comp.props['level']
-        text = comp.props['text']
-        return f"<h{level}>{text}</h{level}>"
+        assert isinstance(comp, HeaderComponent)
+        return f"<h{comp.level}>{comp.text}</h{comp.level}>"
 
     def text_renderer(comp: Component, ctx: Context) -> str:
-        return f"<p>{comp.props['content']}</p>"
+        assert isinstance(comp, TextComponent)
+        return f"<p>{comp.content}</p>"
 
     def page_renderer(comp: Component, ctx: Context) -> str:
+        assert isinstance(comp, PageComponent)
         children_html = [render(child, ctx) for child in comp.children]
         return f'<div class="page">{"".join(children_html)}</div>'
 
@@ -122,41 +111,48 @@ def test_render_nested_component(nested_component: Component) -> None:
 
 def test_render_with_default_renderer() -> None:
     """Test render with default renderer for unknown tag"""
-    comp = Component(tag='unknown', props={}, children=())
+    from yogrt.core import ContainerComponent
+    comp = ContainerComponent(children=())
 
     ctx = Context()
     result = render(comp, ctx)
 
-    assert '<div class="unknown">' in result
+    assert '<div' in result
 
 
 # Test transform function
 def test_transform_simple() -> None:
     """Test simple component transformation"""
-    comp = Component(tag='text', props={'content': 'Hello'}, children=())
+    comp = TextComponent(content='Hello')
 
     def add_class(c: Component) -> Component:
-        props = {**c.props, 'class': 'styled'}
-        return replace(c, props=props)
+        if isinstance(c, TextComponent):
+            return replace(c, class_name='styled')
+        return c
 
     result = transform(comp, add_class)
 
-    assert result.props['class'] == 'styled'
-    assert result.props['content'] == 'Hello'  # Original prop preserved
+    assert isinstance(result, TextComponent)
+    assert result.class_name == 'styled'
+    assert result.content == 'Hello'  # Original prop preserved
 
 
 # Test walk function
 def test_walk_applies_to_all_nodes(nested_component: Component) -> None:
     """Test that walk applies function to all nodes"""
-    def add_class(comp: Component) -> Component:
-        props = {**comp.props, 'visited': True}
-        return replace(comp, props=props)
+    visited = []
 
-    result = walk(nested_component, add_class)
+    def track_visit(comp: Component) -> Component:
+        visited.append(comp.tag)
+        return comp
 
-    assert result.props['visited'] is True
-    assert result.children[0].props['visited'] is True
-    assert result.children[1].props['visited'] is True
+    result = walk(nested_component, track_visit)
+
+    # All nodes should be visited
+    assert 'page' in visited
+    assert 'header' in visited
+    assert 'text' in visited
+    assert len(visited) == 3
 
 
 def test_walk_preserves_structure(nested_component: Component) -> None:
@@ -167,7 +163,8 @@ def test_walk_preserves_structure(nested_component: Component) -> None:
     result = walk(nested_component, identity)
 
     assert result.tag == nested_component.tag
-    assert len(result.children) == len(nested_component.children)
+    assert isinstance(result, PageComponent)
+    assert len(result.children) == len(nested_component.children)  # type: ignore[union-attr]
     assert result.children[0].tag == 'header'
     assert result.children[1].tag == 'text'
 
@@ -180,14 +177,14 @@ def test_walk_post_order() -> None:
         order.append(comp.tag)
         return comp
 
-    child1 = Component(tag='child1', props={}, children=())
-    child2 = Component(tag='child2', props={}, children=())
-    comp = Component(tag='root', props={}, children=(child1, child2))
+    child1 = TextComponent(content='child1')
+    child2 = TextComponent(content='child2')
+    comp = PageComponent(children=(child1, child2))
 
     walk(comp, track_order)
 
     # Children should be visited before parent
-    assert order == ['child1', 'child2', 'root']
+    assert order == ['text', 'text', 'page']
 
 
 # Test find_components
@@ -200,26 +197,29 @@ def test_find_components_with_predicate(nested_component: Component) -> None:
     )
 
     assert len(texts) == 1
-    assert texts[0].props['content'] == 'Content'
+    assert isinstance(texts[0], TextComponent)
+    assert texts[0].content == 'Content'
 
 
 def test_find_components_multiple_matches() -> None:
     """Test find_components with multiple matches"""
-    text_a = Component(tag='text', props={'content': 'A'}, children=())
-    text_b = Component(tag='text', props={'content': 'B'}, children=())
-    header = Component(tag='header', props={}, children=())
-    comp = Component(tag='page', props={}, children=(text_a, text_b, header))
+    text_a = TextComponent(content='A')
+    text_b = TextComponent(content='B')
+    header = HeaderComponent(text='Title', level=1)
+    comp = PageComponent(children=(text_a, text_b, header))
 
     texts = find_components(comp, lambda c: c.tag == 'text')
 
     assert len(texts) == 2
-    assert texts[0].props['content'] == 'A'
-    assert texts[1].props['content'] == 'B'
+    assert isinstance(texts[0], TextComponent)
+    assert isinstance(texts[1], TextComponent)
+    assert texts[0].content == 'A'
+    assert texts[1].content == 'B'
 
 
 def test_find_components_no_matches() -> None:
     """Test find_components with no matches"""
-    comp = Component(tag='page', props={}, children=())
+    comp = PageComponent(children=())
 
     result = find_components(comp, lambda c: c.tag == 'nonexistent')
 
@@ -232,60 +232,62 @@ def test_filter_by_tag(nested_component: Component) -> None:
     headers = filter_by_tag(nested_component, 'header')
 
     assert len(headers) == 1
-    assert headers[0].props['text'] == 'Title'
+    assert isinstance(headers[0], HeaderComponent)
+    assert headers[0].text == 'Title'
 
 
 def test_filter_by_tag_multiple() -> None:
     """Test filter_by_tag with multiple matches"""
-    item1 = Component(tag='item', props={'id': 1}, children=())
-    item2 = Component(tag='item', props={'id': 2}, children=())
-    other = Component(tag='other', props={}, children=())
-    comp = Component(tag='page', props={}, children=(item1, item2, other))
+    text1 = TextComponent(content='A')
+    text2 = TextComponent(content='B')
+    header = HeaderComponent(text='Title', level=1)
+    comp = PageComponent(children=(text1, text2, header))
 
-    items = filter_by_tag(comp, 'item')
+    texts = filter_by_tag(comp, 'text')
 
-    assert len(items) == 2
-    assert items[0].props['id'] == 1
-    assert items[1].props['id'] == 2
+    assert len(texts) == 2
+    assert isinstance(texts[0], TextComponent)
+    assert isinstance(texts[1], TextComponent)
 
 
 # Test map_components
 def test_map_components_is_walk_alias() -> None:
     """Test that map_components is an alias for walk"""
-    comp = Component(tag='test', props={}, children=())
+    comp = TextComponent(content='test')
 
-    def add_prop(c: Component) -> Component:
-        props = {**c.props, 'mapped': True}
-        return replace(c, props=props)
+    def add_key(c: Component) -> Component:
+        if isinstance(c, TextComponent):
+            return replace(c, key='mapped')
+        return c
 
-    result1 = walk(comp, add_prop)
+    result1 = walk(comp, add_key)
+    result2 = map_components(comp, add_key)
 
-    # Reset component
-    comp = Component(tag='test', props={}, children=())
-
-    result2 = map_components(comp, add_prop)
-
-    assert result1.props['mapped'] == result2.props['mapped']
+    assert result1.key == result2.key
+    assert result1.key == 'mapped'
 
 
 # Test default_renderer
 def test_default_renderer() -> None:
     """Test default_renderer function"""
-    comp = Component(tag='custom', props={}, children=())
+    from yogrt.core import ContainerComponent
+    comp = ContainerComponent(children=())
 
     ctx = Context()
     result = default_renderer(comp, ctx)
 
-    assert '<div class="custom">' in result
+    assert '<div class="container">' in result
 
 
 def test_default_renderer_with_children() -> None:
     """Test default_renderer with children"""
     def text_renderer(comp: Component, ctx: Context) -> str:
-        return f"<p>{comp.props['content']}</p>"
+        assert isinstance(comp, TextComponent)
+        return f"<p>{comp.content}</p>"
 
-    child = Component(tag='text', props={'content': 'Child'}, children=())
-    comp = Component(tag='container', props={}, children=(child,))
+    child = TextComponent(content='Child')
+    from yogrt.core import ContainerComponent
+    comp = ContainerComponent(children=(child,))
 
     ctx = Context(renderers={'text': text_renderer})
     result = default_renderer(comp, ctx)
@@ -297,24 +299,24 @@ def test_default_renderer_with_children() -> None:
 # Integration tests
 def test_full_rendering_pipeline() -> None:
     """Test complete rendering pipeline"""
+    from yogrt.core import ContainerComponent
+
     # Create a slide structure
-    header1 = Component(tag='header', props={'text': 'Page 1', 'level': 1}, children=())
-    text1 = Component(tag='text', props={'content': 'Content 1'}, children=())
-    page1 = Component(tag='page', props={}, children=(header1, text1))
+    header1 = HeaderComponent(text='Page 1', level=1)
+    text1 = TextComponent(content='Content 1')
+    page1 = PageComponent(children=(header1, text1))
 
-    header2 = Component(tag='header', props={'text': 'Page 2', 'level': 1}, children=())
-    text2 = Component(tag='text', props={'content': 'Content 2'}, children=())
-    page2 = Component(tag='page', props={}, children=(header2, text2))
+    header2 = HeaderComponent(text='Page 2', level=1)
+    text2 = TextComponent(content='Content 2')
+    page2 = PageComponent(children=(header2, text2))
 
-    slide_comp = Component(tag='slide', props={}, children=(page1, page2))
+    slide_comp = ContainerComponent(children=(page1, page2))
 
     # Transform: add IDs to headers
     def add_header_ids(comp: Component) -> Component:
-        if comp.tag == 'header':
-            text = comp.props['text']
-            id_value = text.lower().replace(' ', '-')
-            props = {**comp.props, 'id': id_value}
-            return replace(comp, props=props)
+        if isinstance(comp, HeaderComponent):
+            id_value = comp.text.lower().replace(' ', '-')
+            return replace(comp, id=id_value)
         return comp
 
     transformed = walk(slide_comp, add_header_ids)
@@ -322,30 +324,34 @@ def test_full_rendering_pipeline() -> None:
     # Verify transformation
     headers = filter_by_tag(transformed, 'header')
     assert len(headers) == 2
-    assert headers[0].props['id'] == 'page-1'
-    assert headers[1].props['id'] == 'page-2'
+    assert isinstance(headers[0], HeaderComponent)
+    assert isinstance(headers[1], HeaderComponent)
+    assert headers[0].id == 'page-1'
+    assert headers[1].id == 'page-2'
 
     # Render
     def header_renderer(comp: Component, ctx: Context) -> str:
-        level = comp.props['level']
-        text = comp.props['text']
-        id_value = comp.props.get('id', '')
-        id_attr = f' id="{id_value}"' if id_value else ''
-        return f"<h{level}{id_attr}>{text}</h{level}>"
+        assert isinstance(comp, HeaderComponent)
+        id_attr = f' id="{comp.id}"' if comp.id else ''
+        return f"<h{comp.level}{id_attr}>{comp.text}</h{comp.level}>"
 
     def text_renderer(comp: Component, ctx: Context) -> str:
-        return f"<p>{comp.props['content']}</p>"
+        assert isinstance(comp, TextComponent)
+        return f"<p>{comp.content}</p>"
 
     def page_renderer(comp: Component, ctx: Context) -> str:
+        assert isinstance(comp, PageComponent)
         children_html = [render(child, ctx) for child in comp.children]
         return f'<div class="page">{"".join(children_html)}</div>'
 
     def slide_renderer(comp: Component, ctx: Context) -> str:
+        from yogrt.core import ContainerComponent
+        assert isinstance(comp, ContainerComponent)
         children_html = [render(child, ctx) for child in comp.children]
         return f'<div class="slide">{"".join(children_html)}</div>'
 
     ctx = Context(renderers={
-        'slide': slide_renderer,
+        'container': slide_renderer,
         'page': page_renderer,
         'header': header_renderer,
         'text': text_renderer
