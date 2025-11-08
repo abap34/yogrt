@@ -1,187 +1,500 @@
 """
-Yogrt Core Module
+Yogrt Core Module - Independent Component Classes
 
-Defines minimal primitives:
-- Component: Data structure
+Defines minimal primitives with independent component classes:
+- Component Protocol: Interface for all components
+- Leaf Components: TextComponent, HeaderComponent, etc. (no children)
+- Container Components: PageComponent, VStackComponent, etc. (with children)
 - render: Component → HTML
-- transform: Component → Component  
+- transform: Component → Component
 - walk: Component tree traversal
 """
 
-from typing import Any, Callable
-from dataclasses import dataclass, field, asdict
+from typing import Any, Callable, Protocol, Union, runtime_checkable
+from dataclasses import dataclass, field
+from abc import ABC, abstractmethod
 
 
 # ============================================================================
-# Type Definitions
+# Component Protocol
+# ============================================================================
+
+@runtime_checkable
+class ComponentProtocol(Protocol):
+    """
+    Protocol that all components must implement
+
+    This allows type checking while keeping components independent.
+    """
+
+    @property
+    def tag(self) -> str:
+        """Component type tag"""
+        ...
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert component to dictionary (homoiconicity)"""
+        ...
+
+
+# ============================================================================
+# Leaf Components (No Children)
 # ============================================================================
 
 @dataclass(frozen=True)
-class Component:
-    """
-    Base Component type definition
-
-    A tree structure equivalent to Lisp's S-expressions.
-    All slide elements are subclasses of this type.
-
-    Immutable by design (frozen=True) to ensure predictable transformations.
-
-    Attributes:
-        tag: String identifying the component type
-        props: Component-specific properties
-        children: Tuple of child components (immutable)
-        key: Unique component identifier (optional)
-
-    Examples:
-        >>> text_comp = Component(
-        ...     tag='text',
-        ...     props={'content': 'Hello'},
-        ...     children=()
-        ... )
-
-        >>> page_comp = Component(
-        ...     tag='page',
-        ...     props={},
-        ...     children=(text_comp,)
-        ... )
-    """
-    tag: str
-    props: dict[str, Any] = field(default_factory=dict)
-    children: tuple['Component', ...] = field(default_factory=tuple)
+class TextComponent:
+    """Text paragraph component"""
+    content: str
+    class_name: str = ""
     key: str | None = None
 
+    @property
+    def tag(self) -> str:
+        return "text"
+
     def to_dict(self) -> dict[str, Any]:
-        """
-        Convert Component to dictionary (homoiconicity)
-
-        Enables treating components as data, like Lisp S-expressions.
-
-        Returns:
-            Dictionary representation
-        """
         return {
-            'tag': self.tag,
-            'props': self.props.copy(),
-            'children': [child.to_dict() for child in self.children],
+            'tag': 'text',
+            'content': self.content,
+            'class': self.class_name,
             'key': self.key
         }
 
-    @staticmethod
-    def from_dict(data: dict[str, Any]) -> 'Component':
-        """
-        Create Component from dictionary (homoiconicity)
 
-        Enables treating data as components, like Lisp S-expressions.
+@dataclass(frozen=True)
+class HeaderComponent:
+    """Header component (h1-h6)"""
+    text: str
+    level: int = 1
+    id: str = ""
+    class_name: str = ""
+    key: str | None = None
 
-        Args:
-            data: Dictionary representation
+    @property
+    def tag(self) -> str:
+        return "header"
 
-        Returns:
-            Component instance
-        """
-        children_data = data.get('children', [])
-        children = tuple(Component.from_dict(child) for child in children_data)
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'header',
+            'text': self.text,
+            'level': self.level,
+            'id': self.id,
+            'class': self.class_name,
+            'key': self.key
+        }
 
-        return Component(
-            tag=data['tag'],
-            props=data.get('props', {}),
-            children=children,
-            key=data.get('key')
-        )
+
+@dataclass(frozen=True)
+class ImageComponent:
+    """Image component"""
+    src: Any  # str path, URL, or matplotlib figure
+    alt: str = ""
+    caption: str = ""
+    width: str = ""
+    height: str = ""
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "image"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'image',
+            'src': self.src if isinstance(self.src, str) else str(self.src),
+            'alt': self.alt,
+            'caption': self.caption,
+            'width': self.width,
+            'height': self.height,
+            'key': self.key
+        }
+
+
+@dataclass(frozen=True)
+class CodeComponent:
+    """Code block component"""
+    code: str
+    lang: str = "python"
+    line_numbers: bool = False
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "code"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'code',
+            'code': self.code,
+            'lang': self.lang,
+            'line_numbers': self.line_numbers,
+            'key': self.key
+        }
+
+
+@dataclass(frozen=True)
+class LinkComponent:
+    """Hyperlink component"""
+    text: str
+    href: str
+    target: str = "_blank"
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "link"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'link',
+            'text': self.text,
+            'href': self.href,
+            'target': self.target,
+            'key': self.key
+        }
+
+
+@dataclass(frozen=True)
+class SpacerComponent:
+    """Vertical spacing component"""
+    height: str = "1rem"
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "spacer"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'spacer',
+            'height': self.height,
+            'key': self.key
+        }
+
+
+@dataclass(frozen=True)
+class DividerComponent:
+    """Horizontal divider component"""
+    color: str = "#e5e7eb"
+    thickness: str = "1px"
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "divider"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'divider',
+            'color': self.color,
+            'thickness': self.thickness,
+            'key': self.key
+        }
+
+
+@dataclass(frozen=True)
+class RawHtmlComponent:
+    """Raw HTML insertion component"""
+    html: str
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "raw-html"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'raw-html',
+            'html': self.html,
+            'key': self.key
+        }
+
+
+@dataclass(frozen=True)
+class FootnoteRefComponent:
+    """Footnote reference component"""
+    note_id: str
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "footnote-ref"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'footnote-ref',
+            'note_id': self.note_id,
+            'key': self.key
+        }
+
+
+@dataclass(frozen=True)
+class FootnoteComponent:
+    """Footnote content component"""
+    note_id: str
+    content: str
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "footnote"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'footnote',
+            'note_id': self.note_id,
+            'content': self.content,
+            'key': self.key
+        }
+
+
+@dataclass(frozen=True)
+class CitationComponent:
+    """Citation reference component (for bibtex)"""
+    cite_key: str
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "citation"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'citation',
+            'cite_key': self.cite_key,
+            'key': self.key
+        }
 
 
 # ============================================================================
-# Component Subclasses (Type Markers)
+# Container Components (With Children)
 # ============================================================================
 
-class TextComponent(Component):
-    """Text component type marker"""
-    pass
+# Union type for all components
+Component = Union[
+    TextComponent,
+    HeaderComponent,
+    ImageComponent,
+    CodeComponent,
+    LinkComponent,
+    SpacerComponent,
+    DividerComponent,
+    RawHtmlComponent,
+    FootnoteRefComponent,
+    FootnoteComponent,
+    CitationComponent,
+    'PageComponent',
+    'VStackComponent',
+    'HStackComponent',
+    'TwoColumnComponent',
+    'GridComponent',
+    'ContainerComponent',
+    'ListComponent',
+    'TOCComponent',
+    'BibliographyComponent',
+]
 
 
-class HeaderComponent(Component):
-    """Header component type marker"""
-    pass
+@dataclass(frozen=True)
+class PageComponent:
+    """Page container component"""
+    children: tuple[Component, ...] = field(default_factory=tuple)
+    class_name: str = ""
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "page"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'page',
+            'children': [child.to_dict() for child in self.children],
+            'class': self.class_name,
+            'key': self.key
+        }
 
 
-class ImageComponent(Component):
-    """Image component type marker"""
-    pass
+@dataclass(frozen=True)
+class VStackComponent:
+    """Vertical stack layout component"""
+    children: tuple[Component, ...] = field(default_factory=tuple)
+    gap: str = "1rem"
+    align: str = "left"
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "vstack"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'vstack',
+            'children': [child.to_dict() for child in self.children],
+            'gap': self.gap,
+            'align': self.align,
+            'key': self.key
+        }
 
 
-class CodeComponent(Component):
-    """Code component type marker"""
-    pass
+@dataclass(frozen=True)
+class HStackComponent:
+    """Horizontal stack layout component"""
+    children: tuple[Component, ...] = field(default_factory=tuple)
+    gap: str = "1rem"
+    align: str = "center"
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "hstack"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'hstack',
+            'children': [child.to_dict() for child in self.children],
+            'gap': self.gap,
+            'align': self.align,
+            'key': self.key
+        }
 
 
-class LinkComponent(Component):
-    """Link component type marker"""
-    pass
+@dataclass(frozen=True)
+class TwoColumnComponent:
+    """Two column layout component"""
+    left: Component
+    right: Component
+    ratio: str = "1:1"
+    gap: str = "2rem"
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "two-column"
+
+    @property
+    def children(self) -> tuple[Component, Component]:
+        """Expose children for walk compatibility"""
+        return (self.left, self.right)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'two-column',
+            'left': self.left.to_dict(),
+            'right': self.right.to_dict(),
+            'ratio': self.ratio,
+            'gap': self.gap,
+            'key': self.key
+        }
 
 
-class PageComponent(Component):
-    """Page component type marker"""
-    pass
+@dataclass(frozen=True)
+class GridComponent:
+    """Grid layout component"""
+    children: tuple[Component, ...] = field(default_factory=tuple)
+    columns: int = 2
+    gap: str = "1rem"
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "grid"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'grid',
+            'children': [child.to_dict() for child in self.children],
+            'columns': self.columns,
+            'gap': self.gap,
+            'key': self.key
+        }
 
 
-class VStackComponent(Component):
-    """VStack component type marker"""
-    pass
+@dataclass(frozen=True)
+class ContainerComponent:
+    """Generic container component"""
+    children: tuple[Component, ...] = field(default_factory=tuple)
+    class_name: str = ""
+    style: str = ""
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "container"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'container',
+            'children': [child.to_dict() for child in self.children],
+            'class': self.class_name,
+            'style': self.style,
+            'key': self.key
+        }
 
 
-class HStackComponent(Component):
-    """HStack component type marker"""
-    pass
+@dataclass(frozen=True)
+class ListComponent:
+    """List component (ordered/unordered)"""
+    children: tuple[Component, ...] = field(default_factory=tuple)
+    ordered: bool = False
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "list"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'list',
+            'children': [child.to_dict() for child in self.children],
+            'ordered': self.ordered,
+            'key': self.key
+        }
 
 
-class TwoColumnComponent(Component):
-    """TwoColumn component type marker"""
-    pass
+@dataclass(frozen=True)
+class TOCComponent:
+    """Table of Contents component (auto-generated from headers)"""
+    max_level: int = 3
+    title: str = "Table of Contents"
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "toc"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'toc',
+            'max_level': self.max_level,
+            'title': self.title,
+            'key': self.key
+        }
 
 
-class GridComponent(Component):
-    """Grid component type marker"""
-    pass
+@dataclass(frozen=True)
+class BibliographyComponent:
+    """Bibliography component (renders citations from bibtex)"""
+    title: str = "References"
+    style: str = "default"
+    key: str | None = None
 
+    @property
+    def tag(self) -> str:
+        return "bibliography"
 
-class ContainerComponent(Component):
-    """Container component type marker"""
-    pass
-
-
-class ListComponent(Component):
-    """List component type marker"""
-    pass
-
-
-class RawHtmlComponent(Component):
-    """RawHtml component type marker"""
-    pass
-
-
-class SpacerComponent(Component):
-    """Spacer component type marker"""
-    pass
-
-
-class DividerComponent(Component):
-    """Divider component type marker"""
-    pass
-
-
-# Type aliases
-Renderer = Callable[[Component, 'Context'], str]
-"""Component → HTML conversion function (renderer)"""
-
-Transform = Callable[[Component], Component]
-"""Component → Component transformation function"""
-
-HtmlTransform = Callable[[str], str]
-"""HTML → HTML transformation function"""
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            'tag': 'bibliography',
+            'title': self.title,
+            'style': self.style,
+            'key': self.key
+        }
 
 
 # ============================================================================
-# Context
+# Context (Rendering State)
 # ============================================================================
 
 @dataclass
@@ -189,30 +502,17 @@ class Context:
     """
     Rendering context
 
-    Holds rendering state and renderers.
-    Also provides a store for data sharing between plugins.
-
-    Attributes:
-        renderers: Mapping from tag name to renderer function
-        store: Data store shared between plugins
-        current_page: Current page number (1-indexed)
-        total_pages: Total number of pages
+    Holds renderers and global state like current page number.
     """
-    renderers: dict[str, Renderer] = field(default_factory=dict)
-    store: dict[str, Any] = field(default_factory=dict)
-    current_page: int = 0
-    total_pages: int = 0
+    renderers: dict[str, Callable[[Component, 'Context'], str]] = field(default_factory=dict)
+    current_page: int = 1
+    total_pages: int = 1
+    footnotes: dict[str, str] = field(default_factory=dict)  # id -> content
+    citations: dict[str, dict[str, str]] = field(default_factory=dict)  # cite_key -> bibtex data
+    headers: list[tuple[int, str, str]] = field(default_factory=list)  # (level, text, id) for TOC
 
-    def get_renderer(self, tag: str) -> Renderer:
-        """
-        Get renderer corresponding to a tag
-
-        Args:
-            tag: Component tag name
-
-        Returns:
-            Renderer function (default renderer if not found)
-        """
+    def get_renderer(self, tag: str) -> Callable[[Component, 'Context'], str]:
+        """Get renderer for component tag"""
         return self.renderers.get(tag, default_renderer)
 
 
@@ -222,10 +522,7 @@ class Context:
 
 def render(component: Component, context: Context) -> str:
     """
-    Render a Component to an HTML string
-
-    This is equivalent to Lisp's eval function.
-    Executes a Component (data) to produce HTML (result).
+    Render component to HTML string
 
     Args:
         component: Component to render
@@ -233,23 +530,14 @@ def render(component: Component, context: Context) -> str:
 
     Returns:
         HTML string
-
-    Examples:
-        >>> comp = Component(tag='text', props={'content': 'Hello'}, children=())
-        >>> ctx = Context(renderers={'text': lambda c, ctx: f"<p>{c.props['content']}</p>"})
-        >>> render(comp, ctx)
-        '<p>Hello</p>'
     """
     renderer = context.get_renderer(component.tag)
     return renderer(component, context)
 
 
-def transform(component: Component, transformer: Transform) -> Component:
+def transform(component: Component, transformer: Callable[[Component], Component]) -> Component:
     """
-    Transform a Component into another Component
-
-    This is equivalent to Lisp's macro expansion.
-    Performs Component → Component transformation.
+    Apply transformation to component
 
     Args:
         component: Component to transform
@@ -257,72 +545,92 @@ def transform(component: Component, transformer: Transform) -> Component:
 
     Returns:
         Transformed component
-
-    Examples:
-        >>> def make_bold(comp: Component) -> Component:
-        ...     return Component(tag='bold', props={}, children=(comp,))
-        >>> comp = Component(tag='text', props={'content': 'Hi'}, children=())
-        >>> result = transform(comp, make_bold)
-        >>> result.tag
-        'bold'
-        >>> result.children[0].tag
-        'text'
     """
     return transformer(component)
 
 
 def walk(component: Component, f: Callable[[Component], Component]) -> Component:
     """
-    Recursively traverse a Component tree and apply a function to each node
+    Walk component tree and apply function to each node (post-order)
 
-    Traverses the tree depth-first and processes children before parents (post-order traversal).
+    Recursively processes children before applying function to parent.
+    Handles both leaf components (no children) and container components.
 
     Args:
-        component: Component to traverse
+        component: Root component
         f: Function to apply to each node
 
     Returns:
         Transformed component tree
-
-    Examples:
-        >>> from dataclasses import replace
-        >>> def add_class(comp: Component) -> Component:
-        ...     new_props = {**comp.props, 'class': 'styled'}
-        ...     return replace(comp, props=new_props)
-        >>> root = Component(
-        ...     tag='page',
-        ...     props={},
-        ...     children=(
-        ...         Component(tag='text', props={}, children=()),
-        ...     )
-        ... )
-        >>> result = walk(root, add_class)
-        >>> result.props['class']
-        'styled'
-        >>> result.children[0].props['class']
-        'styled'
     """
-    # First process children recursively
-    new_children = tuple(walk(child, f) for child in component.children)
-
-    # Create component with updated children using dataclass replace
     from dataclasses import replace
-    new_component = replace(component, children=new_children)
 
-    # Apply function
-    return f(new_component)
+    # Check if component has children
+    if hasattr(component, 'children'):
+        # Recursively walk children
+        new_children = tuple(walk(child, f) for child in component.children)
+
+        # Handle TwoColumnComponent specially (has left/right instead of children tuple)
+        if isinstance(component, TwoColumnComponent):
+            new_component = replace(component, left=new_children[0], right=new_children[1])
+        else:
+            new_component = replace(component, children=new_children)
+
+        # Apply function to updated component
+        return f(new_component)
+    else:
+        # Leaf component - just apply function
+        return f(component)
 
 
-# ============================================================================
-# Default Renderer
-# ============================================================================
+def find_components(
+    root: Component,
+    predicate: Callable[[Component], bool]
+) -> list[Component]:
+    """
+    Find all components matching predicate
+
+    Args:
+        root: Root component to search from
+        predicate: Function that returns True for matching components
+
+    Returns:
+        List of matching components
+    """
+    results: list[Component] = []
+
+    def collector(comp: Component) -> Component:
+        if predicate(comp):
+            results.append(comp)
+        return comp
+
+    walk(root, collector)
+    return results
+
+
+def filter_by_tag(root: Component, tag: str) -> list[Component]:
+    """
+    Find all components with given tag
+
+    Args:
+        root: Root component
+        tag: Tag to search for
+
+    Returns:
+        List of matching components
+    """
+    return find_components(root, lambda c: c.tag == tag)
+
+
+# Alias for compatibility
+map_components = walk
+
 
 def default_renderer(component: Component, context: Context) -> str:
     """
-    Default renderer
+    Default renderer for unknown components
 
-    Used for unknown tags.
-    Renders children and wraps them in a div tag.
+    Renders children (if any) wrapped in a div.
 
     Args:
         component: Component to render
@@ -331,96 +639,8 @@ def default_renderer(component: Component, context: Context) -> str:
     Returns:
         HTML string
     """
-    children_html = [render(child, context) for child in component.children]
-    return f'<div class="{component.tag}">{"".join(children_html)}</div>'
-
-
-# ============================================================================
-# Utility Functions
-# ============================================================================
-
-def find_components(
-    root: Component,
-    predicate: Callable[[Component], bool]
-) -> list[Component]:
-    """
-    Search for components that satisfy a condition
-
-    Traverses the Component tree and returns all components that satisfy the predicate.
-
-    Args:
-        root: Starting node for search
-        predicate: Predicate function
-
-    Returns:
-        List of components satisfying the condition
-
-    Examples:
-        >>> root = Component(
-        ...     tag='page',
-        ...     props={},
-        ...     children=(
-        ...         Component(tag='header', props={'level': 1}, children=()),
-        ...         Component(tag='text', props={}, children=()),
-        ...     )
-        ... )
-        >>> headers = find_components(root, lambda c: c.tag == 'header')
-        >>> len(headers)
-        1
-    """
-    result: list[Component] = []
-
-    def visit(comp: Component) -> None:
-        if predicate(comp):
-            result.append(comp)
-        for child in comp.children:
-            visit(child)
-
-    visit(root)
-    return result
-
-
-def filter_by_tag(root: Component, tag: str) -> list[Component]:
-    """
-    Search for components with a specific tag
-
-    Args:
-        root: Starting node for search
-        tag: Tag name to search for
-
-    Returns:
-        List of components with the specified tag
-
-    Examples:
-        >>> root = Component(
-        ...     tag='page',
-        ...     props={},
-        ...     children=(
-        ...         Component(tag='text', props={'content': 'A'}, children=()),
-        ...         Component(tag='text', props={'content': 'B'}, children=()),
-        ...     )
-        ... )
-        >>> texts = filter_by_tag(root, 'text')
-        >>> len(texts)
-        2
-    """
-    return find_components(root, lambda c: c.tag == tag)
-
-
-def map_components(
-    root: Component,
-    f: Callable[[Component], Component]
-) -> Component:
-    """
-    Apply a function to all components
-
-    Alias for walk. More functional programming style name.
-
-    Args:
-        root: Root component to transform
-        f: Function to apply to each component
-
-    Returns:
-        Transformed component tree
-    """
-    return walk(root, f)
+    if hasattr(component, 'children'):
+        children_html = [render(child, context) for child in component.children]
+        return f'<div class="{component.tag}">{"".join(children_html)}</div>'
+    else:
+        return f'<div class="{component.tag}"></div>'
