@@ -7,6 +7,7 @@ before rendering, enabling powerful preprocessing capabilities.
 
 from yogrt import create_slide, Page, Header, Text, List, Component, walk
 from typing import Any
+from dataclasses import replace
 
 
 # ============================================================================
@@ -19,20 +20,20 @@ def auto_id_transform(component: Component) -> Component:
 
     This allows easy linking within the presentation.
     """
-    if component.get('tag') != 'header':
+    if component.tag != 'header':
         return component
 
     # Get header text and generate ID
-    text = component['props'].get('text', '')
+    text = component.props.get('text', '')
     # Convert to lowercase, replace spaces with hyphens
     auto_id = text.lower().replace(' ', '-').replace('?', '').replace('!', '')
 
     # Add ID to props
-    props = component.get('props', {})
-    if 'id' not in props:  # Don't override existing IDs
-        props['id'] = auto_id
+    if 'id' not in component.props:  # Don't override existing IDs
+        props = {**component.props, 'id': auto_id}
+        return replace(component, props=props)
 
-    return {**component, 'props': props}
+    return component
 
 
 # ============================================================================
@@ -45,19 +46,22 @@ def style_by_content_transform(component: Component) -> Component:
 
     For example, text containing "important" gets a special class.
     """
-    if component.get('tag') != 'text':
+    if component.tag != 'text':
         return component
 
-    content = component['props'].get('content', '')
-    props = component.get('props', {})
+    content = component.props.get('content', '')
 
     # Check for special keywords
     if 'important' in content.lower():
-        props['class'] = props.get('class', '') + ' important-text'
+        class_value = component.props.get('class', '') + ' important-text'
+        props = {**component.props, 'class': class_value}
+        return replace(component, props=props)
     elif 'note' in content.lower():
-        props['class'] = props.get('class', '') + ' note-text'
+        class_value = component.props.get('class', '') + ' note-text'
+        props = {**component.props, 'class': class_value}
+        return replace(component, props=props)
 
-    return {**component, 'props': props}
+    return component
 
 
 # ============================================================================
@@ -70,14 +74,13 @@ def uppercase_headers_transform(component: Component) -> Component:
 
     Demonstrates simple text transformation.
     """
-    if component.get('tag') != 'header':
+    if component.tag != 'header':
         return component
 
-    props = component.get('props', {})
-    text = props.get('text', '')
-    props['text'] = text.upper()
+    text = component.props.get('text', '')
+    props = {**component.props, 'text': text.upper()}
 
-    return {**component, 'props': props}
+    return replace(component, props=props)
 
 
 # ============================================================================
@@ -93,16 +96,16 @@ def numbered_list_transform(component: Component) -> Component:
     Note: This is a stateful transform for demonstration.
     In production, use Context for state management.
     """
-    if component.get('tag') == 'list':
+    if component.tag == 'list':
         counter['value'] = 0
 
-    if component.get('tag') == 'text' and component in []:
+    if component.tag == 'text' and component in []:
         # This is simplified - in practice you'd check parent
         counter['value'] += 1
-        props = component.get('props', {})
-        content = props.get('content', '')
-        props['content'] = f"{counter['value']}. {content}"
-        return {**component, 'props': props}
+        content = component.props.get('content', '')
+        new_content = f"{counter['value']}. {content}"
+        props = {**component.props, 'content': new_content}
+        return replace(component, props=props)
 
     return component
 
@@ -117,10 +120,10 @@ def label_code_transform(component: Component) -> Component:
 
     Wraps code components in a container with a language label.
     """
-    if component.get('tag') != 'code':
+    if component.tag != 'code':
         return component
 
-    lang = component['props'].get('lang', 'text')
+    lang = component.props.get('lang', 'text')
 
     # Create a container with label
     label: Component = {
@@ -154,10 +157,10 @@ def expand_abbreviations_transform(component: Component) -> Component:
 
     Replaces abbreviations with HTML that shows full text on hover.
     """
-    if component.get('tag') != 'text':
+    if component.tag != 'text':
         return component
 
-    content = component['props'].get('content', '')
+    content = component.props.get('content', '')
 
     for abbr, full in ABBREVIATIONS.items():
         if abbr in content:
@@ -167,10 +170,9 @@ def expand_abbreviations_transform(component: Component) -> Component:
                 f'<abbr title="{full}" style="cursor:help;text-decoration:underline dotted;">{abbr}</abbr>'
             )
 
-    props = component.get('props', {})
-    props['content'] = content
+    props = {**component.props, 'content': content}
 
-    return {**component, 'props': props}
+    return replace(component, props=props)
 
 
 # ============================================================================

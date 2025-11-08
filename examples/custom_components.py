@@ -21,11 +21,11 @@ def Alert(message: str, level: str = "info", **props: Any) -> Component:
         message: Alert message
         level: Alert level (info, warning, error, success)
     """
-    return {
-        'tag': 'alert',
-        'props': {'message': message, 'level': level, **props},
-        'children': []
-    }
+    return Component(
+        tag='alert',
+        props={'message': message, 'level': level, **props},
+        children=()
+    )
 
 
 def Badge(text: str, color: str = "blue", **props: Any) -> Component:
@@ -36,11 +36,11 @@ def Badge(text: str, color: str = "blue", **props: Any) -> Component:
         text: Badge text
         color: Badge color
     """
-    return {
-        'tag': 'badge',
-        'props': {'text': text, 'color': color, **props},
-        'children': []
-    }
+    return Component(
+        tag='badge',
+        props={'text': text, 'color': color, **props},
+        children=()
+    )
 
 
 def Card(*children: Component, title: str = "", **props: Any) -> Component:
@@ -51,11 +51,11 @@ def Card(*children: Component, title: str = "", **props: Any) -> Component:
         *children: Child components
         title: Card title
     """
-    return {
-        'tag': 'card',
-        'props': {'title': title, **props},
-        'children': list(children)
-    }
+    return Component(
+        tag='card',
+        props={'title': title, **props},
+        children=children
+    )
 
 
 # ============================================================================
@@ -64,8 +64,8 @@ def Card(*children: Component, title: str = "", **props: Any) -> Component:
 
 def render_alert(component: Component, context: Context) -> str:
     """Render Alert component"""
-    message = component['props']['message']
-    level = component['props']['level']
+    message = component.props['message']
+    level = component.props['level']
 
     # Color scheme for different levels
     colors = {
@@ -93,8 +93,8 @@ def render_alert(component: Component, context: Context) -> str:
 
 def render_badge(component: Component, context: Context) -> str:
     """Render Badge component"""
-    text = component['props']['text']
-    color = component['props']['color']
+    text = component.props['text']
+    color = component.props['color']
 
     colors = {
         'blue': '#3b82f6',
@@ -124,8 +124,8 @@ def render_card(component: Component, context: Context) -> str:
     """Render Card component"""
     from yogrt import render
 
-    title = component['props'].get('title', '')
-    children_html = [render(child, context) for child in component['children']]
+    title = component.props.get('title', '')
+    children_html = [render(child, context) for child in component.children]
 
     title_html = f'<h3 style="margin-top: 0; color: #1f2937;">{title}</h3>' if title else ''
 

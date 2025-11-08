@@ -15,29 +15,29 @@ from typing import Any
 
 def Highlight(text: str, color: str = "yellow", **props: Any) -> Component:
     """Highlight text with background color"""
-    return {
-        'tag': 'highlight',
-        'props': {'text': text, 'color': color, **props},
-        'children': []
-    }
+    return Component(
+        tag='highlight',
+        props={'text': text, 'color': color, **props},
+        children=()
+    )
 
 
 def Quote(text: str, author: str = "", **props: Any) -> Component:
     """Blockquote with optional author attribution"""
-    return {
-        'tag': 'quote',
-        'props': {'text': text, 'author': author, **props},
-        'children': []
-    }
+    return Component(
+        tag='quote',
+        props={'text': text, 'author': author, **props},
+        children=()
+    )
 
 
 def PageNumber(**props: Any) -> Component:
     """Page number placeholder (will be filled by transform)"""
-    return {
-        'tag': 'page-number',
-        'props': props,
-        'children': []
-    }
+    return Component(
+        tag='page-number',
+        props=props,
+        children=()
+    )
 
 
 # ============================================================================
@@ -52,8 +52,8 @@ def highlight_plugin() -> Plugin:
         Plugin function
     """
     def render_highlight(component: Component, context: Context) -> str:
-        text = component['props']['text']
-        color = component['props']['color']
+        text = component.props['text']
+        color = component.props['color']
 
         colors = {
             'yellow': '#fef08a',
@@ -85,8 +85,8 @@ def quote_plugin() -> Plugin:
         Plugin function
     """
     def render_quote(component: Component, context: Context) -> str:
-        text = component['props']['text']
-        author = component['props'].get('author', '')
+        text = component.props['text']
+        author = component.props.get('author', '')
 
         author_html = f'<footer style="margin-top: 0.5rem; color: #6b7280;">— {author}</footer>' if author else ''
 
@@ -144,17 +144,16 @@ def page_number_plugin(position: str = "bottom-right") -> Plugin:
 
     def add_page_number(component: Component) -> Component:
         """Transform that adds page number to each page"""
-        if component.get('tag') != 'page':
+        from dataclasses import replace
+
+        if component.tag != 'page':
             return component
 
         # Add page number component to page
         page_number = PageNumber()
-        children = component.get('children', [])
+        new_children = component.children + (page_number,)
 
-        return {
-            **component,
-            'children': children + [page_number]
-        }
+        return replace(component, children=new_children)
 
     def plugin(slide: Slide) -> Slide:
         slide.add_renderer('page-number', render_page_number)
@@ -253,7 +252,7 @@ def main():
         Quote(
             "Lisp has jokingly been called 'the most intelligent way to misuse a computer'. "
             "I think that description is a great compliment because it transmits the full "
-            + Highlight("flavor", color="yellow")['props']['text'] + " of liberation.",
+            "flavor of liberation.",
             author="John McCarthy"
         ),
         Text("Notice the page numbers at the bottom-right corner!")
