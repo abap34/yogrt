@@ -1,18 +1,35 @@
 """
 Yogrt Standard Components
 
-Defines standard component factory functions.
+Defines standard component factory functions with type-safe return types.
 """
 
 from typing import Any
-from .core import Component
+from .core import (
+    Component,
+    TextComponent,
+    HeaderComponent,
+    ImageComponent,
+    CodeComponent,
+    LinkComponent,
+    PageComponent,
+    VStackComponent,
+    HStackComponent,
+    TwoColumnComponent,
+    GridComponent,
+    ContainerComponent,
+    ListComponent,
+    RawHtmlComponent,
+    SpacerComponent,
+    DividerComponent,
+)
 
 
 # ============================================================================
 # Basic Components
 # ============================================================================
 
-def Text(content: str, **props: Any) -> Component:
+def Text(content: str, **props: Any) -> TextComponent:
     """
     Text component
 
@@ -21,7 +38,7 @@ def Text(content: str, **props: Any) -> Component:
         **props: Additional properties
 
     Returns:
-        Text component
+        TextComponent
 
     Examples:
         >>> text = Text("Hello, world!")
@@ -29,15 +46,17 @@ def Text(content: str, **props: Any) -> Component:
         'text'
         >>> text.props['content']
         'Hello, world!'
+        >>> isinstance(text, TextComponent)
+        True
     """
-    return Component(
+    return TextComponent(
         tag='text',
         props={'content': content, **props},
         children=()
     )
 
 
-def Header(text: str, level: int = 1, **props: Any) -> Component:
+def Header(text: str, level: int = 1, **props: Any) -> HeaderComponent:
     """
     Header component
 
@@ -47,7 +66,7 @@ def Header(text: str, level: int = 1, **props: Any) -> Component:
         **props: Additional properties (id, class, etc.)
 
     Returns:
-        Header component
+        HeaderComponent
 
     Examples:
         >>> header = Header("Introduction", level=2, id="intro")
@@ -57,15 +76,17 @@ def Header(text: str, level: int = 1, **props: Any) -> Component:
         2
         >>> header.props['id']
         'intro'
+        >>> isinstance(header, HeaderComponent)
+        True
     """
-    return Component(
+    return HeaderComponent(
         tag='header',
         props={'text': text, 'level': level, **props},
         children=()
     )
 
 
-def Image(src: Any, caption: str | None = None, **props: Any) -> Component:
+def Image(src: Any, caption: str | None = None, **props: Any) -> ImageComponent:
     """
     Image component
 
@@ -75,7 +96,7 @@ def Image(src: Any, caption: str | None = None, **props: Any) -> Component:
         **props: Additional properties
 
     Returns:
-        Image component
+        ImageComponent
 
     Examples:
         >>> img = Image("photo.jpg", caption="A beautiful sunset")
@@ -83,15 +104,17 @@ def Image(src: Any, caption: str | None = None, **props: Any) -> Component:
         'image'
         >>> img.props['caption']
         'A beautiful sunset'
+        >>> isinstance(img, ImageComponent)
+        True
     """
-    return Component(
+    return ImageComponent(
         tag='image',
         props={'src': src, 'caption': caption, **props},
         children=()
     )
 
 
-def Code(code: str, lang: str = "python", **props: Any) -> Component:
+def Code(code: str, lang: str = "python", **props: Any) -> CodeComponent:
     """
     Code block component
 
@@ -101,7 +124,7 @@ def Code(code: str, lang: str = "python", **props: Any) -> Component:
         **props: Additional properties
 
     Returns:
-        Code component
+        CodeComponent
 
     Examples:
         >>> code = Code("print('Hello')", lang="python")
@@ -109,15 +132,17 @@ def Code(code: str, lang: str = "python", **props: Any) -> Component:
         'code'
         >>> code.props['lang']
         'python'
+        >>> isinstance(code, CodeComponent)
+        True
     """
-    return Component(
+    return CodeComponent(
         tag='code',
         props={'code': code, 'lang': lang, **props},
         children=()
     )
 
 
-def Link(url: str, text: str, **props: Any) -> Component:
+def Link(url: str, text: str, **props: Any) -> LinkComponent:
     """
     Link component
 
@@ -127,14 +152,16 @@ def Link(url: str, text: str, **props: Any) -> Component:
         **props: Additional properties
 
     Returns:
-        Link component
+        LinkComponent
 
     Examples:
         >>> link = Link("https://example.com", "Visit Example")
         >>> link.props['url']
         'https://example.com'
+        >>> isinstance(link, LinkComponent)
+        True
     """
-    return Component(
+    return LinkComponent(
         tag='link',
         props={'url': url, 'text': text, **props},
         children=()
@@ -145,7 +172,7 @@ def Link(url: str, text: str, **props: Any) -> Component:
 # Container Components
 # ============================================================================
 
-def Page(*children: Component, **props: Any) -> Component:
+def Page(*children: Component, **props: Any) -> PageComponent:
     """
     Page component
 
@@ -156,7 +183,7 @@ def Page(*children: Component, **props: Any) -> Component:
         **props: Additional properties
 
     Returns:
-        Page component
+        PageComponent
 
     Examples:
         >>> page = Page(
@@ -167,15 +194,17 @@ def Page(*children: Component, **props: Any) -> Component:
         'page'
         >>> len(page.children)
         2
+        >>> isinstance(page, PageComponent)
+        True
     """
-    return Component(
+    return PageComponent(
         tag='page',
         props=props,
         children=children
     )
 
 
-def VStack(*children: Component, gap: str = "1rem", **props: Any) -> Component:
+def VStack(*children: Component, gap: str = "1rem", **props: Any) -> VStackComponent:
     """
     Vertical stack layout
 
@@ -187,7 +216,7 @@ def VStack(*children: Component, gap: str = "1rem", **props: Any) -> Component:
         **props: Additional properties
 
     Returns:
-        VStack component
+        VStackComponent
 
     Examples:
         >>> stack = VStack(
@@ -199,15 +228,17 @@ def VStack(*children: Component, gap: str = "1rem", **props: Any) -> Component:
         'vstack'
         >>> stack.props['gap']
         '2rem'
+        >>> isinstance(stack, VStackComponent)
+        True
     """
-    return Component(
+    return VStackComponent(
         tag='vstack',
         props={'gap': gap, **props},
         children=children
     )
 
 
-def HStack(*children: Component, gap: str = "1rem", **props: Any) -> Component:
+def HStack(*children: Component, gap: str = "1rem", **props: Any) -> HStackComponent:
     """
     Horizontal stack layout
 
@@ -219,7 +250,7 @@ def HStack(*children: Component, gap: str = "1rem", **props: Any) -> Component:
         **props: Additional properties
 
     Returns:
-        HStack component
+        HStackComponent
 
     Examples:
         >>> stack = HStack(
@@ -229,15 +260,17 @@ def HStack(*children: Component, gap: str = "1rem", **props: Any) -> Component:
         ... )
         >>> stack.tag
         'hstack'
+        >>> isinstance(stack, HStackComponent)
+        True
     """
-    return Component(
+    return HStackComponent(
         tag='hstack',
         props={'gap': gap, **props},
         children=children
     )
 
 
-def TwoColumn(left: Component, right: Component, **props: Any) -> Component:
+def TwoColumn(left: Component, right: Component, **props: Any) -> TwoColumnComponent:
     """
     Two-column layout
 
@@ -249,7 +282,7 @@ def TwoColumn(left: Component, right: Component, **props: Any) -> Component:
         **props: Additional properties
 
     Returns:
-        TwoColumn component
+        TwoColumnComponent
 
     Examples:
         >>> layout = TwoColumn(
@@ -260,15 +293,17 @@ def TwoColumn(left: Component, right: Component, **props: Any) -> Component:
         'two-column'
         >>> len(layout.children)
         2
+        >>> isinstance(layout, TwoColumnComponent)
+        True
     """
-    return Component(
+    return TwoColumnComponent(
         tag='two-column',
         props=props,
         children=(left, right)
     )
 
 
-def Grid(*children: Component, columns: int = 2, gap: str = "1rem", **props: Any) -> Component:
+def Grid(*children: Component, columns: int = 2, gap: str = "1rem", **props: Any) -> GridComponent:
     """
     Grid layout
 
@@ -281,7 +316,7 @@ def Grid(*children: Component, columns: int = 2, gap: str = "1rem", **props: Any
         **props: Additional properties
 
     Returns:
-        Grid component
+        GridComponent
 
     Examples:
         >>> grid = Grid(
@@ -290,15 +325,17 @@ def Grid(*children: Component, columns: int = 2, gap: str = "1rem", **props: Any
         ... )
         >>> grid.props['columns']
         2
+        >>> isinstance(grid, GridComponent)
+        True
     """
-    return Component(
+    return GridComponent(
         tag='grid',
         props={'columns': columns, 'gap': gap, **props},
         children=children
     )
 
 
-def Container(*children: Component, **props: Any) -> Component:
+def Container(*children: Component, **props: Any) -> ContainerComponent:
     """
     Generic container
 
@@ -309,7 +346,7 @@ def Container(*children: Component, **props: Any) -> Component:
         **props: Additional properties
 
     Returns:
-        Container component
+        ContainerComponent
 
     Examples:
         >>> container = Container(
@@ -319,8 +356,10 @@ def Container(*children: Component, **props: Any) -> Component:
         ... )
         >>> container.tag
         'container'
+        >>> isinstance(container, ContainerComponent)
+        True
     """
-    return Component(
+    return ContainerComponent(
         tag='container',
         props=props,
         children=children
@@ -331,7 +370,7 @@ def Container(*children: Component, **props: Any) -> Component:
 # List Components
 # ============================================================================
 
-def List(*items: str | Component, ordered: bool = False, **props: Any) -> Component:
+def List(*items: str | Component, ordered: bool = False, **props: Any) -> ListComponent:
     """
     List component
 
@@ -341,7 +380,7 @@ def List(*items: str | Component, ordered: bool = False, **props: Any) -> Compon
         **props: Additional properties
 
     Returns:
-        List component
+        ListComponent
 
     Examples:
         >>> lst = List("Item 1", "Item 2", "Item 3")
@@ -349,20 +388,22 @@ def List(*items: str | Component, ordered: bool = False, **props: Any) -> Compon
         'list'
         >>> len(lst.children)
         3
+        >>> isinstance(lst, ListComponent)
+        True
 
         >>> lst_ordered = List("First", "Second", ordered=True)
         >>> lst_ordered.props['ordered']
         True
     """
     # Convert strings to Text components
-    children = []
+    children: list[Component] = []
     for item in items:
         if isinstance(item, str):
             children.append(Text(item))
         else:
             children.append(item)
 
-    return Component(
+    return ListComponent(
         tag='list',
         props={'ordered': ordered, **props},
         children=tuple(children)
@@ -373,7 +414,7 @@ def List(*items: str | Component, ordered: bool = False, **props: Any) -> Compon
 # Special Components
 # ============================================================================
 
-def RawHtml(html: str, **props: Any) -> Component:
+def RawHtml(html: str, **props: Any) -> RawHtmlComponent:
     """
     Raw HTML component
 
@@ -384,7 +425,7 @@ def RawHtml(html: str, **props: Any) -> Component:
         **props: Additional properties
 
     Returns:
-        RawHtml component
+        RawHtmlComponent
 
     Examples:
         >>> raw = RawHtml("<div class='custom'>Custom HTML</div>")
@@ -392,15 +433,17 @@ def RawHtml(html: str, **props: Any) -> Component:
         'raw-html'
         >>> raw.props['html']
         '<div class=\\'custom\\'>Custom HTML</div>'
+        >>> isinstance(raw, RawHtmlComponent)
+        True
     """
-    return Component(
+    return RawHtmlComponent(
         tag='raw-html',
         props={'html': html, **props},
         children=()
     )
 
 
-def Spacer(height: str = "1rem", **props: Any) -> Component:
+def Spacer(height: str = "1rem", **props: Any) -> SpacerComponent:
     """
     Spacer component
 
@@ -411,21 +454,23 @@ def Spacer(height: str = "1rem", **props: Any) -> Component:
         **props: Additional properties
 
     Returns:
-        Spacer component
+        SpacerComponent
 
     Examples:
         >>> spacer = Spacer(height="2rem")
         >>> spacer.props['height']
         '2rem'
+        >>> isinstance(spacer, SpacerComponent)
+        True
     """
-    return Component(
+    return SpacerComponent(
         tag='spacer',
         props={'height': height, **props},
         children=()
     )
 
 
-def Divider(**props: Any) -> Component:
+def Divider(**props: Any) -> DividerComponent:
     """
     Divider component
 
@@ -433,14 +478,16 @@ def Divider(**props: Any) -> Component:
         **props: Additional properties
 
     Returns:
-        Divider component
+        DividerComponent
 
     Examples:
         >>> divider = Divider()
         >>> divider.tag
         'divider'
+        >>> isinstance(divider, DividerComponent)
+        True
     """
-    return Component(
+    return DividerComponent(
         tag='divider',
         props=props,
         children=()

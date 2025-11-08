@@ -19,16 +19,16 @@ from dataclasses import dataclass, field, asdict
 @dataclass(frozen=True)
 class Component:
     """
-    Component type definition
+    Base Component type definition
 
     A tree structure equivalent to Lisp's S-expressions.
-    All slide elements are represented by this type.
+    All slide elements are subclasses of this type.
 
     Immutable by design (frozen=True) to ensure predictable transformations.
 
     Attributes:
         tag: String identifying the component type
-        props: Component-specific properties (frozen dict)
+        props: Component-specific properties
         children: Tuple of child components (immutable)
         key: Unique component identifier (optional)
 
@@ -88,6 +88,85 @@ class Component:
             children=children,
             key=data.get('key')
         )
+
+
+# ============================================================================
+# Component Subclasses (Type Markers)
+# ============================================================================
+
+class TextComponent(Component):
+    """Text component type marker"""
+    pass
+
+
+class HeaderComponent(Component):
+    """Header component type marker"""
+    pass
+
+
+class ImageComponent(Component):
+    """Image component type marker"""
+    pass
+
+
+class CodeComponent(Component):
+    """Code component type marker"""
+    pass
+
+
+class LinkComponent(Component):
+    """Link component type marker"""
+    pass
+
+
+class PageComponent(Component):
+    """Page component type marker"""
+    pass
+
+
+class VStackComponent(Component):
+    """VStack component type marker"""
+    pass
+
+
+class HStackComponent(Component):
+    """HStack component type marker"""
+    pass
+
+
+class TwoColumnComponent(Component):
+    """TwoColumn component type marker"""
+    pass
+
+
+class GridComponent(Component):
+    """Grid component type marker"""
+    pass
+
+
+class ContainerComponent(Component):
+    """Container component type marker"""
+    pass
+
+
+class ListComponent(Component):
+    """List component type marker"""
+    pass
+
+
+class RawHtmlComponent(Component):
+    """RawHtml component type marker"""
+    pass
+
+
+class SpacerComponent(Component):
+    """Spacer component type marker"""
+    pass
+
+
+class DividerComponent(Component):
+    """Divider component type marker"""
+    pass
 
 
 # Type aliases

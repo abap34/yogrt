@@ -18,6 +18,21 @@ __version__ = "0.1.0"
 # Core exports
 from .core import (
     Component,
+    TextComponent,
+    HeaderComponent,
+    ImageComponent,
+    CodeComponent,
+    LinkComponent,
+    PageComponent,
+    VStackComponent,
+    HStackComponent,
+    TwoColumnComponent,
+    GridComponent,
+    ContainerComponent,
+    ListComponent,
+    RawHtmlComponent,
+    SpacerComponent,
+    DividerComponent,
     Context,
     Renderer,
     Transform,
@@ -96,6 +111,23 @@ __all__ = [
     '__version__',
     # Core
     'Component',
+    # Component Types
+    'TextComponent',
+    'HeaderComponent',
+    'ImageComponent',
+    'CodeComponent',
+    'LinkComponent',
+    'PageComponent',
+    'VStackComponent',
+    'HStackComponent',
+    'TwoColumnComponent',
+    'GridComponent',
+    'ContainerComponent',
+    'ListComponent',
+    'RawHtmlComponent',
+    'SpacerComponent',
+    'DividerComponent',
+    # Core types and functions
     'Context',
     'Renderer',
     'Transform',
@@ -110,22 +142,22 @@ __all__ = [
     'Slide',
     'Plugin',
     'create_slide',
-    # Components - Basic
+    # Component Factory Functions - Basic
     'Text',
     'Header',
     'Image',
     'Code',
     'Link',
-    # Components - Containers
+    # Component Factory Functions - Containers
     'Page',
     'VStack',
     'HStack',
     'TwoColumn',
     'Grid',
     'Container',
-    # Components - Lists
+    # Component Factory Functions - Lists
     'List',
-    # Components - Special
+    # Component Factory Functions - Special
     'RawHtml',
     'Spacer',
     'Divider',
