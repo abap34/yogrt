@@ -1,7 +1,6 @@
 """Tests for yogrt.components and yogrt.renderers modules"""
 
 import pytest
-from typing import cast
 import io
 
 from yogrt.components import (
@@ -27,36 +26,36 @@ def test_text_component() -> None:
     """Test Text component factory"""
     comp = Text("Hello, world!")
 
-    assert comp['tag'] == 'text'
-    assert comp['props']['content'] == 'Hello, world!'
-    assert comp['children'] == []
+    assert comp.tag == 'text'
+    assert comp.props['content'] == 'Hello, world!'
+    assert comp.children == ()
 
 
 def test_text_component_with_props() -> None:
     """Test Text with additional props"""
     comp = Text("Hello", class_name="my-class")
 
-    assert comp['props']['content'] == 'Hello'
-    assert comp['props']['class_name'] == 'my-class'
+    assert comp.props['content'] == 'Hello'
+    assert comp.props['class_name'] == 'my-class'
 
 
 def test_header_component() -> None:
     """Test Header component factory"""
     comp = Header("Title", level=2, id="my-title")
 
-    assert comp['tag'] == 'header'
-    assert comp['props']['text'] == 'Title'
-    assert comp['props']['level'] == 2
-    assert comp['props']['id'] == 'my-title'
+    assert comp.tag == 'header'
+    assert comp.props['text'] == 'Title'
+    assert comp.props['level'] == 2
+    assert comp.props['id'] == 'my-title'
 
 
 def test_image_component() -> None:
     """Test Image component factory"""
     comp = Image("photo.jpg", caption="A photo")
 
-    assert comp['tag'] == 'image'
-    assert comp['props']['src'] == 'photo.jpg'
-    assert comp['props']['caption'] == 'A photo'
+    assert comp.tag == 'image'
+    assert comp.props['src'] == 'photo.jpg'
+    assert comp.props['caption'] == 'A photo'
 
 
 def test_code_component() -> None:
@@ -64,18 +63,18 @@ def test_code_component() -> None:
     code_str = "print('Hello')"
     comp = Code(code_str, lang="python")
 
-    assert comp['tag'] == 'code'
-    assert comp['props']['code'] == code_str
-    assert comp['props']['lang'] == 'python'
+    assert comp.tag == 'code'
+    assert comp.props['code'] == code_str
+    assert comp.props['lang'] == 'python'
 
 
 def test_link_component() -> None:
     """Test Link component factory"""
     comp = Link("https://example.com", "Example")
 
-    assert comp['tag'] == 'link'
-    assert comp['props']['url'] == 'https://example.com'
-    assert comp['props']['text'] == 'Example'
+    assert comp.tag == 'link'
+    assert comp.props['url'] == 'https://example.com'
+    assert comp.props['text'] == 'Example'
 
 
 def test_page_component() -> None:
@@ -85,10 +84,10 @@ def test_page_component() -> None:
 
     comp = Page(child1, child2)
 
-    assert comp['tag'] == 'page'
-    assert len(comp['children']) == 2
-    assert comp['children'][0] == child1
-    assert comp['children'][1] == child2
+    assert comp.tag == 'page'
+    assert len(comp.children) == 2
+    assert comp.children[0] == child1
+    assert comp.children[1] == child2
 
 
 def test_vstack_component() -> None:
@@ -98,9 +97,9 @@ def test_vstack_component() -> None:
 
     comp = VStack(child1, child2, gap="2rem")
 
-    assert comp['tag'] == 'vstack'
-    assert comp['props']['gap'] == '2rem'
-    assert len(comp['children']) == 2
+    assert comp.tag == 'vstack'
+    assert comp.props['gap'] == '2rem'
+    assert len(comp.children) == 2
 
 
 def test_hstack_component() -> None:
@@ -110,9 +109,9 @@ def test_hstack_component() -> None:
 
     comp = HStack(child1, child2)
 
-    assert comp['tag'] == 'hstack'
-    assert comp['props']['gap'] == '1rem'  # default
-    assert len(comp['children']) == 2
+    assert comp.tag == 'hstack'
+    assert comp.props['gap'] == '1rem'  # default
+    assert len(comp.children) == 2
 
 
 def test_two_column_component() -> None:
@@ -122,10 +121,10 @@ def test_two_column_component() -> None:
 
     comp = TwoColumn(left, right)
 
-    assert comp['tag'] == 'two-column'
-    assert len(comp['children']) == 2
-    assert comp['children'][0] == left
-    assert comp['children'][1] == right
+    assert comp.tag == 'two-column'
+    assert len(comp.children) == 2
+    assert comp.children[0] == left
+    assert comp.children[1] == right
 
 
 def test_grid_component() -> None:
@@ -134,10 +133,10 @@ def test_grid_component() -> None:
 
     comp = Grid(*items, columns=2, gap="1rem")
 
-    assert comp['tag'] == 'grid'
-    assert comp['props']['columns'] == 2
-    assert comp['props']['gap'] == '1rem'
-    assert len(comp['children']) == 4
+    assert comp.tag == 'grid'
+    assert comp.props['columns'] == 2
+    assert comp.props['gap'] == '1rem'
+    assert len(comp.children) == 4
 
 
 def test_container_component() -> None:
@@ -146,29 +145,29 @@ def test_container_component() -> None:
 
     comp = Container(child, class_name="my-container")
 
-    assert comp['tag'] == 'container'
-    assert len(comp['children']) == 1
-    assert comp['props']['class_name'] == 'my-container'
+    assert comp.tag == 'container'
+    assert len(comp.children) == 1
+    assert comp.props['class_name'] == 'my-container'
 
 
 def test_list_component() -> None:
     """Test List component factory"""
     comp = ListComp("Item 1", "Item 2", "Item 3")
 
-    assert comp['tag'] == 'list'
-    assert comp['props']['ordered'] is False
-    assert len(comp['children']) == 3
+    assert comp.tag == 'list'
+    assert comp.props['ordered'] is False
+    assert len(comp.children) == 3
 
     # Check that strings were converted to Text components
-    assert comp['children'][0]['tag'] == 'text'
-    assert comp['children'][0]['props']['content'] == 'Item 1'
+    assert comp.children[0].tag == 'text'
+    assert comp.children[0].props['content'] == 'Item 1'
 
 
 def test_list_component_ordered() -> None:
     """Test List component with ordered=True"""
     comp = ListComp("First", "Second", ordered=True)
 
-    assert comp['props']['ordered'] is True
+    assert comp.props['ordered'] is True
 
 
 def test_list_component_with_components() -> None:
@@ -178,9 +177,9 @@ def test_list_component_with_components() -> None:
 
     comp = ListComp(child1, child2)
 
-    assert len(comp['children']) == 2
-    assert comp['children'][0] == child1
-    assert comp['children'][1] == child2
+    assert len(comp.children) == 2
+    assert comp.children[0] == child1
+    assert comp.children[1] == child2
 
 
 def test_raw_html_component() -> None:
@@ -188,23 +187,23 @@ def test_raw_html_component() -> None:
     html = '<div class="custom">Custom HTML</div>'
     comp = RawHtml(html)
 
-    assert comp['tag'] == 'raw-html'
-    assert comp['props']['html'] == html
+    assert comp.tag == 'raw-html'
+    assert comp.props['html'] == html
 
 
 def test_spacer_component() -> None:
     """Test Spacer component factory"""
     comp = Spacer(height="3rem")
 
-    assert comp['tag'] == 'spacer'
-    assert comp['props']['height'] == '3rem'
+    assert comp.tag == 'spacer'
+    assert comp.props['height'] == '3rem'
 
 
 def test_divider_component() -> None:
     """Test Divider component factory"""
     comp = Divider()
 
-    assert comp['tag'] == 'divider'
+    assert comp.tag == 'divider'
 
 
 # ============================================================================
@@ -223,11 +222,11 @@ def test_render_text() -> None:
 
 def test_render_text_with_class() -> None:
     """Test text renderer with class"""
-    comp = cast(Component, {
-        'tag': 'text',
-        'props': {'content': 'Hello', 'class': 'my-class'},
-        'children': []
-    })
+    comp = Component(
+        tag='text',
+        props={'content': 'Hello', 'class': 'my-class'},
+        children=()
+    )
     ctx = Context()
 
     result = render_text(comp, ctx)

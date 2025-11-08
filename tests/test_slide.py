@@ -3,9 +3,9 @@
 import pytest
 import tempfile
 from pathlib import Path
-from typing import cast
 
 from yogrt.slide import Slide, Plugin
+from dataclasses import replace
 from yogrt.core import Component, Context
 
 
@@ -19,13 +19,8 @@ def empty_slide() -> Slide:
 @pytest.fixture
 def simple_page() -> Component:
     """Create a simple page component"""
-    return cast(Component, {
-        'tag': 'page',
-        'props': {},
-        'children': [
-            {'tag': 'text', 'props': {'content': 'Hello'}, 'children': []}
-        ]
-    })
+    text = Component(tag='text', props={'content': 'Hello'}, children=())
+    return Component(tag='page', props={}, children=(text,))
 
 
 # Test Slide initialization
@@ -49,8 +44,8 @@ def test_add_page(empty_slide: Slide, simple_page: Component) -> None:
 
 def test_add_multiple_pages(empty_slide: Slide) -> None:
     """Test adding multiple pages"""
-    page1 = cast(Component, {'tag': 'page', 'props': {}, 'children': []})
-    page2 = cast(Component, {'tag': 'page', 'props': {}, 'children': []})
+    page1 = Component(tag='page', props={}, children=())
+    page2 = Component(tag='page', props={}, children=())
 
     empty_slide.add_page(page1).add_page(page2)
 
@@ -114,21 +109,16 @@ def test_use_plugin(empty_slide: Slide) -> None:
 # Test build
 def test_build_applies_transforms(empty_slide: Slide) -> None:
     """Test that build applies all transforms"""
-    page = cast(Component, {
-        'tag': 'page',
-        'props': {},
-        'children': [
-            {'tag': 'text', 'props': {'count': 0}, 'children': []}
-        ]
-    })
+    text = Component(tag='text', props={'count': 0}, children=())
+    page = Component(tag='page', props={}, children=(text,))
 
     empty_slide.add_page(page)
 
     # Add transforms that increment count
     def increment_count(comp: Component) -> Component:
-        if comp['tag'] == 'text':
-            props = {**comp['props'], 'count': comp['props']['count'] + 1}
-            return cast(Component, {**comp, 'props': props})
+        if comp.tag == 'text':
+            props = {**comp.props, 'count': comp.props['count'] + 1}
+            return replace(comp, props=props)
         return comp
 
     empty_slide.add_transform(increment_count)
@@ -137,8 +127,8 @@ def test_build_applies_transforms(empty_slide: Slide) -> None:
     built = empty_slide.build()
 
     # Check that transforms were applied
-    text_comp = built.pages[0]['children'][0]
-    assert text_comp['props']['count'] == 2
+    text_comp = built.pages[0].children[0]
+    assert text_comp.props['count'] == 2
 
 
 def test_build_creates_new_slide(empty_slide: Slide, simple_page: Component) -> None:
@@ -174,11 +164,7 @@ def test_build_preserves_context_and_html_transforms(empty_slide: Slide) -> None
 def test_export_creates_file(empty_slide: Slide, tmp_path: Path) -> None:
     """Test that export creates an HTML file"""
     # Add a simple page
-    page = cast(Component, {
-        'tag': 'page',
-        'props': {},
-        'children': []
-    })
+    page = Component(tag='page', props={}, children=())
     empty_slide.add_page(page)
 
     # Add renderer
@@ -202,7 +188,7 @@ def test_export_creates_file(empty_slide: Slide, tmp_path: Path) -> None:
 
 def test_export_applies_html_transforms(empty_slide: Slide, tmp_path: Path) -> None:
     """Test that export applies HTML transforms"""
-    page = cast(Component, {'tag': 'page', 'props': {}, 'children': []})
+    page = Component(tag='page', props={}, children=())
     empty_slide.add_page(page)
 
     def page_renderer(comp: Component, ctx: Context) -> str:
@@ -237,7 +223,7 @@ def test_export_sets_context_page_numbers(empty_slide: Slide, tmp_path: Path) ->
 
     # Add three pages
     for _ in range(3):
-        empty_slide.add_page(cast(Component, {'tag': 'page', 'props': {}, 'children': []}))
+        empty_slide.add_page(Component(tag='page', props={}, children=()))
 
     # Export
     output_file = tmp_path / "test.html"
@@ -276,17 +262,17 @@ def test_full_slide_workflow(tmp_path: Path) -> None:
 
     # Add renderers
     def header_renderer(comp: Component, ctx: Context) -> str:
-        text = comp['props']['text']
-        level = comp['props']['level']
+        text = comp.props['text']
+        level = comp.props['level']
         return f"<h{level}>{text}</h{level}>"
 
     def text_renderer(comp: Component, ctx: Context) -> str:
-        content = comp['props']['content']
+        content = comp.props['content']
         return f"<p>{content}</p>"
 
     def page_renderer(comp: Component, ctx: Context) -> str:
         from yogrt.core import render
-        children_html = [render(child, ctx) for child in comp['children']]
+        children_html = [render(child, ctx) for child in comp.children]
         return f'<div class="page">{"".join(children_html)}</div>'
 
     slide.add_renderer('header', header_renderer)
@@ -295,11 +281,11 @@ def test_full_slide_workflow(tmp_path: Path) -> None:
 
     # Add transform
     def add_ids_to_headers(comp: Component) -> Component:
-        if comp['tag'] == 'header':
-            text = comp['props']['text']
+        if comp.tag == 'header':
+            text = comp.props['text']
             id_value = text.lower().replace(' ', '-')
-            props = {**comp['props'], 'id': id_value}
-            return cast(Component, {**comp, 'props': props})
+            props = {**comp.props, 'id': id_value}
+            return replace(comp, props=props)
         return comp
 
     slide.add_transform(add_ids_to_headers)
@@ -314,23 +300,13 @@ def test_full_slide_workflow(tmp_path: Path) -> None:
     slide.add_html_transform(add_meta_tag)
 
     # Add pages
-    page1 = cast(Component, {
-        'tag': 'page',
-        'props': {},
-        'children': [
-            {'tag': 'header', 'props': {'text': 'First Page', 'level': 1}, 'children': []},
-            {'tag': 'text', 'props': {'content': 'Content of first page'}, 'children': []}
-        ]
-    })
+    header1 = Component(tag='header', props={'text': 'First Page', 'level': 1}, children=())
+    text1 = Component(tag='text', props={'content': 'Content of first page'}, children=())
+    page1 = Component(tag='page', props={}, children=(header1, text1))
 
-    page2 = cast(Component, {
-        'tag': 'page',
-        'props': {},
-        'children': [
-            {'tag': 'header', 'props': {'text': 'Second Page', 'level': 1}, 'children': []},
-            {'tag': 'text', 'props': {'content': 'Content of second page'}, 'children': []}
-        ]
-    })
+    header2 = Component(tag='header', props={'text': 'Second Page', 'level': 1}, children=())
+    text2 = Component(tag='text', props={'content': 'Content of second page'}, children=())
+    page2 = Component(tag='page', props={}, children=(header2, text2))
 
     slide.add_page(page1).add_page(page2)
 
@@ -364,14 +340,14 @@ def test_multiple_plugins_work_together(tmp_path: Path) -> None:
     # Plugin 1: Adds header renderer
     def header_plugin(slide: Slide) -> Slide:
         def header_renderer(comp: Component, ctx: Context) -> str:
-            return f"<h1>{comp['props']['text']}</h1>"
+            return f"<h1>{comp.props['text']}</h1>"
         slide.add_renderer('header', header_renderer)
         return slide
 
     # Plugin 2: Adds text renderer
     def text_plugin(slide: Slide) -> Slide:
         def text_renderer(comp: Component, ctx: Context) -> str:
-            return f"<p>{comp['props']['content']}</p>"
+            return f"<p>{comp.props['content']}</p>"
         slide.add_renderer('text', text_renderer)
         return slide
 
@@ -379,7 +355,7 @@ def test_multiple_plugins_work_together(tmp_path: Path) -> None:
     def page_plugin(slide: Slide) -> Slide:
         def page_renderer(comp: Component, ctx: Context) -> str:
             from yogrt.core import render
-            children_html = [render(child, ctx) for child in comp['children']]
+            children_html = [render(child, ctx) for child in comp.children]
             return f'<div class="page">{"".join(children_html)}</div>'
         slide.add_renderer('page', page_renderer)
         return slide
@@ -388,14 +364,9 @@ def test_multiple_plugins_work_together(tmp_path: Path) -> None:
     slide.use(header_plugin).use(text_plugin).use(page_plugin)
 
     # Add a page
-    page = cast(Component, {
-        'tag': 'page',
-        'props': {},
-        'children': [
-            {'tag': 'header', 'props': {'text': 'Title'}, 'children': []},
-            {'tag': 'text', 'props': {'content': 'Body'}, 'children': []}
-        ]
-    })
+    header = Component(tag='header', props={'text': 'Title'}, children=())
+    text = Component(tag='text', props={'content': 'Body'}, children=())
+    page = Component(tag='page', props={}, children=(header, text))
 
     slide.add_page(page)
 
