@@ -1,7 +1,7 @@
 """
 Yogrt Standard Components
 
-標準コンポーネントのファクトリ関数を定義。
+Defines standard component factory functions.
 """
 
 from typing import Any
@@ -14,14 +14,14 @@ from .core import Component
 
 def Text(content: str, **props: Any) -> Component:
     """
-    テキストコンポーネント
+    Text component
 
     Args:
-        content: 表示するテキスト
-        **props: 追加プロパティ
+        content: Text to display
+        **props: Additional properties
 
     Returns:
-        テキストコンポーネント
+        Text component
 
     Examples:
         >>> text = Text("Hello, world!")
@@ -39,15 +39,15 @@ def Text(content: str, **props: Any) -> Component:
 
 def Header(text: str, level: int = 1, **props: Any) -> Component:
     """
-    ヘッダーコンポーネント
+    Header component
 
     Args:
-        text: ヘッダーテキスト
-        level: 見出しレベル (1-6)
-        **props: 追加プロパティ（id, class など）
+        text: Header text
+        level: Heading level (1-6)
+        **props: Additional properties (id, class, etc.)
 
     Returns:
-        ヘッダーコンポーネント
+        Header component
 
     Examples:
         >>> header = Header("Introduction", level=2, id="intro")
@@ -67,15 +67,15 @@ def Header(text: str, level: int = 1, **props: Any) -> Component:
 
 def Image(src: Any, caption: str | None = None, **props: Any) -> Component:
     """
-    画像コンポーネント
+    Image component
 
     Args:
-        src: 画像ソース（ファイルパス、URL、matplotlib Figure など）
-        caption: キャプション（オプション）
-        **props: 追加プロパティ
+        src: Image source (file path, URL, matplotlib Figure, etc.)
+        caption: Caption (optional)
+        **props: Additional properties
 
     Returns:
-        画像コンポーネント
+        Image component
 
     Examples:
         >>> img = Image("photo.jpg", caption="A beautiful sunset")
@@ -93,15 +93,15 @@ def Image(src: Any, caption: str | None = None, **props: Any) -> Component:
 
 def Code(code: str, lang: str = "python", **props: Any) -> Component:
     """
-    コードブロックコンポーネント
+    Code block component
 
     Args:
-        code: コード文字列
-        lang: プログラミング言語
-        **props: 追加プロパティ
+        code: Code string
+        lang: Programming language
+        **props: Additional properties
 
     Returns:
-        コードコンポーネント
+        Code component
 
     Examples:
         >>> code = Code("print('Hello')", lang="python")
@@ -119,15 +119,15 @@ def Code(code: str, lang: str = "python", **props: Any) -> Component:
 
 def Link(url: str, text: str, **props: Any) -> Component:
     """
-    リンクコンポーネント
+    Link component
 
     Args:
-        url: リンク先URL
-        text: 表示テキスト
-        **props: 追加プロパティ
+        url: Link destination URL
+        text: Display text
+        **props: Additional properties
 
     Returns:
-        リンクコンポーネント
+        Link component
 
     Examples:
         >>> link = Link("https://example.com", "Visit Example")
@@ -147,16 +147,16 @@ def Link(url: str, text: str, **props: Any) -> Component:
 
 def Page(*children: Component, **props: Any) -> Component:
     """
-    ページコンポーネント
+    Page component
 
-    スライドの1ページを表す。
+    Represents one page of a slide.
 
     Args:
-        *children: 子コンポーネント
-        **props: 追加プロパティ
+        *children: Child components
+        **props: Additional properties
 
     Returns:
-        ページコンポーネント
+        Page component
 
     Examples:
         >>> page = Page(
@@ -177,17 +177,17 @@ def Page(*children: Component, **props: Any) -> Component:
 
 def VStack(*children: Component, gap: str = "1rem", **props: Any) -> Component:
     """
-    垂直スタックレイアウト
+    Vertical stack layout
 
-    子要素を縦に並べる。
+    Arranges child elements vertically.
 
     Args:
-        *children: 子コンポーネント
-        gap: 子要素間の間隔
-        **props: 追加プロパティ
+        *children: Child components
+        gap: Spacing between children
+        **props: Additional properties
 
     Returns:
-        VStack コンポーネント
+        VStack component
 
     Examples:
         >>> stack = VStack(
@@ -209,17 +209,17 @@ def VStack(*children: Component, gap: str = "1rem", **props: Any) -> Component:
 
 def HStack(*children: Component, gap: str = "1rem", **props: Any) -> Component:
     """
-    水平スタックレイアウト
+    Horizontal stack layout
 
-    子要素を横に並べる。
+    Arranges child elements horizontally.
 
     Args:
-        *children: 子コンポーネント
-        gap: 子要素間の間隔
-        **props: 追加プロパティ
+        *children: Child components
+        gap: Spacing between children
+        **props: Additional properties
 
     Returns:
-        HStack コンポーネント
+        HStack component
 
     Examples:
         >>> stack = HStack(
@@ -239,17 +239,17 @@ def HStack(*children: Component, gap: str = "1rem", **props: Any) -> Component:
 
 def TwoColumn(left: Component, right: Component, **props: Any) -> Component:
     """
-    2カラムレイアウト
+    Two-column layout
 
-    左右に要素を配置。
+    Places elements left and right.
 
     Args:
-        left: 左側のコンポーネント
-        right: 右側のコンポーネント
-        **props: 追加プロパティ
+        left: Left component
+        right: Right component
+        **props: Additional properties
 
     Returns:
-        TwoColumn コンポーネント
+        TwoColumn component
 
     Examples:
         >>> layout = TwoColumn(
@@ -270,18 +270,18 @@ def TwoColumn(left: Component, right: Component, **props: Any) -> Component:
 
 def Grid(*children: Component, columns: int = 2, gap: str = "1rem", **props: Any) -> Component:
     """
-    グリッドレイアウト
+    Grid layout
 
-    子要素をグリッド状に配置。
+    Arranges child elements in a grid.
 
     Args:
-        *children: 子コンポーネント
-        columns: カラム数
-        gap: グリッドの間隔
-        **props: 追加プロパティ
+        *children: Child components
+        columns: Number of columns
+        gap: Grid spacing
+        **props: Additional properties
 
     Returns:
-        Grid コンポーネント
+        Grid component
 
     Examples:
         >>> grid = Grid(
@@ -300,16 +300,16 @@ def Grid(*children: Component, columns: int = 2, gap: str = "1rem", **props: Any
 
 def Container(*children: Component, **props: Any) -> Component:
     """
-    汎用コンテナ
+    Generic container
 
-    子要素をグループ化する。
+    Groups child elements.
 
     Args:
-        *children: 子コンポーネント
-        **props: 追加プロパティ
+        *children: Child components
+        **props: Additional properties
 
     Returns:
-        Container コンポーネント
+        Container component
 
     Examples:
         >>> container = Container(
@@ -333,15 +333,15 @@ def Container(*children: Component, **props: Any) -> Component:
 
 def List(*items: str | Component, ordered: bool = False, **props: Any) -> Component:
     """
-    リストコンポーネント
+    List component
 
     Args:
-        *items: リストアイテム（文字列または Component）
-        ordered: 順序付きリストかどうか
-        **props: 追加プロパティ
+        *items: List items (strings or Components)
+        ordered: Whether it's an ordered list
+        **props: Additional properties
 
     Returns:
-        List コンポーネント
+        List component
 
     Examples:
         >>> lst = List("Item 1", "Item 2", "Item 3")
@@ -354,7 +354,7 @@ def List(*items: str | Component, ordered: bool = False, **props: Any) -> Compon
         >>> lst_ordered['props']['ordered']
         True
     """
-    # 文字列を Text コンポーネントに変換
+    # Convert strings to Text components
     children = []
     for item in items:
         if isinstance(item, str):
@@ -375,16 +375,16 @@ def List(*items: str | Component, ordered: bool = False, **props: Any) -> Compon
 
 def RawHtml(html: str, **props: Any) -> Component:
     """
-    生HTMLコンポーネント
+    Raw HTML component
 
-    直接HTMLを挿入する。
+    Directly inserts HTML.
 
     Args:
-        html: HTML文字列
-        **props: 追加プロパティ
+        html: HTML string
+        **props: Additional properties
 
     Returns:
-        RawHtml コンポーネント
+        RawHtml component
 
     Examples:
         >>> raw = RawHtml("<div class='custom'>Custom HTML</div>")
@@ -402,16 +402,16 @@ def RawHtml(html: str, **props: Any) -> Component:
 
 def Spacer(height: str = "1rem", **props: Any) -> Component:
     """
-    スペーサーコンポーネント
+    Spacer component
 
-    空白スペースを挿入。
+    Inserts empty space.
 
     Args:
-        height: スペースの高さ
-        **props: 追加プロパティ
+        height: Height of the space
+        **props: Additional properties
 
     Returns:
-        Spacer コンポーネント
+        Spacer component
 
     Examples:
         >>> spacer = Spacer(height="2rem")
@@ -427,13 +427,13 @@ def Spacer(height: str = "1rem", **props: Any) -> Component:
 
 def Divider(**props: Any) -> Component:
     """
-    区切り線コンポーネント
+    Divider component
 
     Args:
-        **props: 追加プロパティ
+        **props: Additional properties
 
     Returns:
-        Divider コンポーネント
+        Divider component
 
     Examples:
         >>> divider = Divider()

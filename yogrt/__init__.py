@@ -1,7 +1,7 @@
 """
 Yogrt - Programmable Slide Framework
 
-Lisp的な哲学に基づいた、簡潔で無限に拡張可能なスライドフレームワーク。
+A Lisp-inspired slide framework with concise design and infinite extensibility.
 
 Examples:
     >>> from yogrt import create_slide, Page, Header, Text
@@ -66,12 +66,12 @@ from .renderers import DEFAULT_RENDERERS
 
 def create_slide() -> Slide:
     """
-    デフォルト設定でスライドを作成
+    Create a slide with default configuration
 
-    標準レンダラーがすべて登録された Slide インスタンスを返す。
+    Returns a Slide instance with all standard renderers registered.
 
     Returns:
-        Slide インスタンス
+        Slide instance
 
     Examples:
         >>> slide = create_slide()
@@ -80,7 +80,7 @@ def create_slide() -> Slide:
     """
     slide = Slide()
 
-    # 標準レンダラーを登録
+    # Register standard renderers
     for tag, renderer in DEFAULT_RENDERERS.items():
         slide.add_renderer(tag, renderer)
 

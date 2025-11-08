@@ -7,25 +7,35 @@ Yogrt is a Python-based slide framework that treats slides as code. Inspired by 
 ## Features
 
 - 🎯 **Programmable**: Write slides as Python code
-- 🔧 **Extensible**: Infinite customization through plugins
+- 🔧 **Extensible**: Infinite customization through plugins and transforms
 - 🪶 **Simple**: Minimal core with 3 primitives
 - 🧩 **Composable**: Build complex slides from small parts
 - 📊 **Data-Friendly**: Direct matplotlib/pandas integration
 - 🎨 **Customizable**: Full control over rendering
+- 🔍 **Type-Safe**: Strict mypy type checking
+- ✅ **Well-Tested**: 95% test coverage
 
 ## Philosophy
 
 Yogrt adopts Lisp's design principles:
 
 1. **Minimal Primitives**: Everything built from `Component`, `render`, and `transform`
-2. **Code as Data**: Components are plain Python dicts
+2. **Code as Data**: Components are plain Python dicts (like S-expressions)
 3. **Functions First**: Everything is a function, no complex OOP
 4. **Immutability**: Predictable transformations
 
 ## Installation
 
 ```bash
-pip install yogrt
+# Clone the repository
+git clone https://github.com/abap34/yogrt.git
+cd yogrt
+
+# Install with uv (recommended)
+uv pip install -e .
+
+# Or with pip
+pip install -e .
 ```
 
 ## Quick Start
@@ -87,7 +97,7 @@ fig, ax = plt.subplots()
 ax.plot(x, y)
 ax.set_title("Sine Wave")
 
-# Add to slide
+# Add to slide - matplotlib figures are automatically converted to base64
 slide = create_slide()
 slide.add_page(Page(
     Header("Data Visualization", level=1),
@@ -95,23 +105,6 @@ slide.add_page(Page(
 ))
 
 slide.export("data_viz.html")
-```
-
-## Extensions with Plugins
-
-```python
-from yogrt import create_slide, Page, Text
-from yogrt.plugins.mathjax import mathjax_plugin, Math
-
-slide = create_slide()
-slide.use(mathjax_plugin())
-
-slide.add_page(Page(
-    Text("The famous equation:"),
-    Math(r"E = mc^2", display=True)
-))
-
-slide.export("with_math.html")
 ```
 
 ## Architecture
@@ -128,39 +121,50 @@ Component = {
 }
 ```
 
+All slide elements are represented as plain Python dictionaries, similar to Lisp's S-expressions.
+
 ### 2. Renderer (Component → HTML)
 
 ```python
 def my_renderer(component: Component, context: Context) -> str:
-    return f"<div>{component['props']}</div>"
+    content = component['props']['content']
+    return f"<div>{content}</div>"
 ```
+
+Renderers convert components into HTML strings. This is analogous to Lisp's `eval`.
 
 ### 3. Transform (Component → Component)
 
 ```python
 def my_transform(component: Component) -> Component:
-    # Modify component
-    return modified_component
+    # Modify component tree
+    props = component.get('props', {})
+    props['class'] = 'styled'
+    return {**component, 'props': props}
 ```
+
+Transforms perform Component → Component conversions. This is analogous to Lisp's macro expansion.
 
 ## Creating Custom Components
 
 ```python
 from yogrt import Component
+from typing import Any
 
-def Alert(message: str, level: str = "info") -> Component:
+def Alert(message: str, level: str = "info", **props: Any) -> Component:
     return {
         'tag': 'alert',
-        'props': {'message': message, 'level': level},
+        'props': {'message': message, 'level': level, **props},
         'children': []
     }
 
 # Register renderer
-def render_alert(comp, ctx):
+def render_alert(comp: Component, ctx: Context) -> str:
     message = comp['props']['message']
     level = comp['props']['level']
     return f'<div class="alert alert-{level}">{message}</div>'
 
+slide = create_slide()
 slide.add_renderer('alert', render_alert)
 
 # Use it
@@ -171,69 +175,109 @@ slide.add_page(Page(
 
 ## Creating Plugins
 
+Plugins are `Slide → Slide` functions that encapsulate reusable functionality:
+
 ```python
-def my_plugin(option: str):
-    def plugin(slide):
+from yogrt import Slide, Plugin
+
+def my_plugin(option: str) -> Plugin:
+    def plugin(slide: Slide) -> Slide:
         # Add custom renderer
         slide.add_renderer('my-tag', my_renderer)
 
         # Add transform
         slide.add_transform(my_transform)
 
+        # Add HTML transform
+        slide.add_html_transform(lambda html: html + "<!-- custom -->")
+
         return slide
     return plugin
 
 # Use plugin
+slide = create_slide()
 slide.use(my_plugin(option="value"))
 ```
 
-## Available Plugins
+## Available Components
 
-- **BibTeX**: Citation management
-- **MathJax**: LaTeX math rendering
-- **TOC**: Table of contents generation
-- **Code Execution**: Run and display code output
+### Basic Components
+- **Text**: Paragraph text
+- **Header**: Headings (h1-h6)
+- **Image**: Images (supports file paths, URLs, matplotlib figures)
+- **Code**: Code blocks with syntax highlighting
+- **Link**: Hyperlinks
 
-See [SPECIFICATION.md](SPECIFICATION.md) for complete documentation.
+### Layout Components
+- **Page**: Slide page container
+- **VStack**: Vertical stack layout
+- **HStack**: Horizontal stack layout
+- **TwoColumn**: Two-column layout
+- **Grid**: Grid layout
+- **Container**: Generic container
+
+### List Components
+- **List**: Unordered/ordered lists
+
+### Special Components
+- **RawHtml**: Direct HTML insertion
+- **Spacer**: Vertical spacing
+- **Divider**: Horizontal divider
 
 ## Project Structure
 
 ```
 yogrt/
 ├── yogrt/
-│   ├── core.py          # Core primitives
-│   ├── slide.py         # Slide container
-│   ├── components.py    # Standard components
+│   ├── core.py          # Core primitives (Component, render, transform, walk)
+│   ├── slide.py         # Slide container and export
+│   ├── components.py    # Standard components (15 components)
 │   ├── renderers.py     # Standard renderers
-│   └── plugins/         # Plugin implementations
-├── examples/            # Usage examples
-├── tests/               # Test suite
+│   └── __init__.py      # Public API
+├── examples/
+│   ├── basic.py         # Basic usage example
+│   └── advanced.py      # Data visualization example
+├── tests/
+│   ├── test_core.py                      # Core tests (19 tests, 100% coverage)
+│   ├── test_slide.py                     # Slide tests (16 tests, 100% coverage)
+│   └── test_components_and_renderers.py  # Component tests (38 tests)
 ├── SPECIFICATION.md     # Complete specification
+├── pyproject.toml       # Project configuration (uv, mypy, pytest)
 └── README.md           # This file
 ```
 
 ## Development
 
 ```bash
-# Install dev dependencies
-pip install -e ".[dev]"
+# Install with dev dependencies using uv
+uv pip install -e .
 
 # Run tests
 pytest
 
-# Type checking
+# Run tests with coverage
+pytest --cov=yogrt --cov-report=term-missing
+
+# Type checking (strict mode)
 mypy yogrt
 
-# Format code
-black yogrt
+# All tests must pass, all types must check
 ```
+
+### Development Requirements
+
+- Python 3.10+
+- uv (recommended) or pip
+- pytest for testing
+- mypy for type checking
+- matplotlib (optional, for data visualization)
 
 ## Why "Yogrt"?
 
 The name comes from "Yogurt" (ヨーグルト), representing something:
-- Simple and pure (like Lisp)
-- Healthy and natural (minimal dependencies)
-- Customizable (add your own toppings/plugins)
+- **Simple and pure** (like Lisp)
+- **Healthy and natural** (minimal dependencies)
+- **Customizable** (add your own toppings/plugins)
 
 The unconventional spelling makes it unique and easy to search.
 
@@ -246,7 +290,29 @@ The unconventional spelling makes it unique and easy to search.
 | Git-friendly | ✅ | ✅ | ✅ | ❌ |
 | Extensible | ✅ | Limited | Limited | ❌ |
 | Data Visualization | ✅ | ❌ | Partial | Partial |
-| Code Execution | ✅ | ❌ | ❌ | ❌ |
+| Type-Safe | ✅ | ❌ | ❌ | ❌ |
+| Functional | ✅ | ❌ | ❌ | ❌ |
+
+## Examples
+
+See the `examples/` directory for complete working examples:
+
+- **basic.py**: Basic slide creation with text, headers, and layouts
+- **advanced.py**: Data visualization with matplotlib integration
+
+Run examples:
+```bash
+cd examples
+python basic.py      # Generates basic_example.html
+python advanced.py   # Generates advanced_example.html
+```
+
+## Design Philosophy
+
+For a deep dive into the design philosophy and technical specification, see:
+
+- 📖 [Complete Specification](SPECIFICATION.md) - 6000+ lines of detailed documentation
+- 📊 [Design Alternatives](user_rendering_extensions.md) - Comparison of design approaches
 
 ## License
 
@@ -254,11 +320,17 @@ MIT License - see LICENSE file
 
 ## Contributing
 
-Contributions welcome! Please see CONTRIBUTING.md
+Contributions welcome! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Write tests for new features
+4. Ensure all tests pass (`pytest`)
+5. Ensure type checking passes (`mypy yogrt`)
+6. Submit a pull request
 
 ## Links
 
-- 📖 [Complete Specification](SPECIFICATION.md)
 - 🐛 [Issue Tracker](https://github.com/abap34/yogrt/issues)
 - 💬 [Discussions](https://github.com/abap34/yogrt/discussions)
 

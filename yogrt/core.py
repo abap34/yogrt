@@ -1,11 +1,11 @@
 """
 Yogrt Core Module
 
-最小限のプリミティブを定義:
-- Component: データ構造
+Defines minimal primitives:
+- Component: Data structure
 - render: Component → HTML
-- transform: Component → Component
-- walk: Component 木の走査
+- transform: Component → Component  
+- walk: Component tree traversal
 """
 
 from typing import TypedDict, Any, Callable, cast
@@ -18,16 +18,16 @@ from dataclasses import dataclass, field
 
 class Component(TypedDict, total=False):
     """
-    コンポーネントの型定義
+    Component type definition
 
-    Lisp の S式に相当する木構造。
-    すべてのスライド要素はこの型で表現される。
+    A tree structure equivalent to Lisp's S-expressions.
+    All slide elements are represented by this type.
 
     Attributes:
-        tag: コンポーネントタイプを識別する文字列
-        props: コンポーネント固有のプロパティ
-        children: 子コンポーネントのリスト
-        key: コンポーネントの一意識別子（オプション）
+        tag: String identifying the component type
+        props: Component-specific properties
+        children: List of child components
+        key: Unique component identifier (optional)
 
     Examples:
         >>> text_comp: Component = {
@@ -50,13 +50,13 @@ class Component(TypedDict, total=False):
 
 # Type aliases
 Renderer = Callable[[Component, 'Context'], str]
-"""Component → HTML の変換関数（レンダラー）"""
+"""Component → HTML conversion function (renderer)"""
 
 Transform = Callable[[Component], Component]
-"""Component → Component の変換関数"""
+"""Component → Component transformation function"""
 
 HtmlTransform = Callable[[str], str]
-"""HTML → HTML の変換関数"""
+"""HTML → HTML transformation function"""
 
 
 # ============================================================================
@@ -66,16 +66,16 @@ HtmlTransform = Callable[[str], str]
 @dataclass
 class Context:
     """
-    レンダリングコンテキスト
+    Rendering context
 
-    レンダリング時の状態とレンダラーを保持する。
-    プラグイン間でデータを共有するための store も提供。
+    Holds rendering state and renderers.
+    Also provides a store for data sharing between plugins.
 
     Attributes:
-        renderers: タグ名 → レンダラー関数のマッピング
-        store: プラグイン間で共有するデータストア
-        current_page: 現在のページ番号（1始まり）
-        total_pages: 総ページ数
+        renderers: Mapping from tag name to renderer function
+        store: Data store shared between plugins
+        current_page: Current page number (1-indexed)
+        total_pages: Total number of pages
     """
     renderers: dict[str, Renderer] = field(default_factory=dict)
     store: dict[str, Any] = field(default_factory=dict)
@@ -84,13 +84,13 @@ class Context:
 
     def get_renderer(self, tag: str) -> Renderer:
         """
-        タグに対応するレンダラーを取得
+        Get renderer corresponding to a tag
 
         Args:
-            tag: コンポーネントのタグ名
+            tag: Component tag name
 
         Returns:
-            レンダラー関数（見つからない場合はデフォルトレンダラー）
+            Renderer function (default renderer if not found)
         """
         return self.renderers.get(tag, default_renderer)
 
@@ -101,17 +101,17 @@ class Context:
 
 def render(component: Component, context: Context) -> str:
     """
-    Component を HTML 文字列にレンダリング
+    Render a Component to an HTML string
 
-    これは Lisp の eval に相当する関数。
-    Component（データ）を実行して HTML（結果）を得る。
+    This is equivalent to Lisp's eval function.
+    Executes a Component (data) to produce HTML (result).
 
     Args:
-        component: レンダリング対象のコンポーネント
-        context: レンダリングコンテキスト
+        component: Component to render
+        context: Rendering context
 
     Returns:
-        HTML文字列
+        HTML string
 
     Examples:
         >>> comp: Component = {'tag': 'text', 'props': {'content': 'Hello'}, 'children': []}
@@ -126,17 +126,17 @@ def render(component: Component, context: Context) -> str:
 
 def transform(component: Component, transformer: Transform) -> Component:
     """
-    Component を別の Component に変換
+    Transform a Component into another Component
 
-    これは Lisp のマクロ展開に相当する。
-    Component → Component の変換を行う。
+    This is equivalent to Lisp's macro expansion.
+    Performs Component → Component transformation.
 
     Args:
-        component: 変換対象のコンポーネント
-        transformer: 変換関数
+        component: Component to transform
+        transformer: Transformation function
 
     Returns:
-        変換後のコンポーネント
+        Transformed component
 
     Examples:
         >>> def make_bold(comp: Component) -> Component:
@@ -150,17 +150,16 @@ def transform(component: Component, transformer: Transform) -> Component:
 
 def walk(component: Component, f: Callable[[Component], Component]) -> Component:
     """
-    Component 木を再帰的に走査し、各ノードに関数を適用
+    Recursively traverse a Component tree and apply a function to each node
 
-    深さ優先探索で木を走査し、各ノードに変換関数を適用する。
-    子要素から先に処理される（post-order traversal）。
+    Traverses the tree depth-first and processes children before parents (post-order traversal).
 
     Args:
-        component: 走査対象のコンポーネント
-        f: 各ノードに適用する関数
+        component: Component to traverse
+        f: Function to apply to each node
 
     Returns:
-        変換後のコンポーネント木
+        Transformed component tree
 
     Examples:
         >>> def add_class(comp: Component) -> Component:
@@ -180,14 +179,14 @@ def walk(component: Component, f: Callable[[Component], Component]) -> Component
         >>> result['children'][0]['props']['class']
         'styled'
     """
-    # まず子要素を再帰的に処理
+    # First process children recursively
     children = component.get('children', [])
     new_children = [walk(child, f) for child in children]
 
-    # 子要素を更新したコンポーネントを作成
+    # Create component with updated children
     new_component = cast(Component, {**component, 'children': new_children})
 
-    # 関数を適用
+    # Apply function
     return f(new_component)
 
 
@@ -197,17 +196,17 @@ def walk(component: Component, f: Callable[[Component], Component]) -> Component
 
 def default_renderer(component: Component, context: Context) -> str:
     """
-    デフォルトレンダラー
+    Default renderer
 
-    未知のタグに対して使用される。
-    子要素をレンダリングし、div タグで囲む。
+    Used for unknown tags.
+    Renders children and wraps them in a div tag.
 
     Args:
-        component: レンダリング対象
-        context: レンダリングコンテキスト
+        component: Component to render
+        context: Rendering context
 
     Returns:
-        HTML文字列
+        HTML string
     """
     tag = component['tag']
     children = component.get('children', [])
@@ -224,16 +223,16 @@ def find_components(
     predicate: Callable[[Component], bool]
 ) -> list[Component]:
     """
-    条件を満たすコンポーネントを検索
+    Search for components that satisfy a condition
 
-    Component 木を走査し、述語を満たすすべてのコンポーネントを返す。
+    Traverses the Component tree and returns all components that satisfy the predicate.
 
     Args:
-        root: 検索開始ノード
-        predicate: 判定関数
+        root: Starting node for search
+        predicate: Predicate function
 
     Returns:
-        条件を満たすコンポーネントのリスト
+        List of components satisfying the condition
 
     Examples:
         >>> root: Component = {
@@ -262,14 +261,14 @@ def find_components(
 
 def filter_by_tag(root: Component, tag: str) -> list[Component]:
     """
-    特定のタグを持つコンポーネントを検索
+    Search for components with a specific tag
 
     Args:
-        root: 検索開始ノード
-        tag: 検索するタグ名
+        root: Starting node for search
+        tag: Tag name to search for
 
     Returns:
-        指定されたタグを持つコンポーネントのリスト
+        List of components with the specified tag
 
     Examples:
         >>> from typing import cast
@@ -293,15 +292,15 @@ def map_components(
     f: Callable[[Component], Component]
 ) -> Component:
     """
-    すべてのコンポーネントに関数を適用
+    Apply a function to all components
 
-    walk のエイリアス。より関数型プログラミング的な名前。
+    Alias for walk. More functional programming style name.
 
     Args:
-        root: 変換対象のルートコンポーネント
-        f: 各コンポーネントに適用する関数
+        root: Root component to transform
+        f: Function to apply to each component
 
     Returns:
-        変換後のコンポーネント木
+        Transformed component tree
     """
     return walk(root, f)

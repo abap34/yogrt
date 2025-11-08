@@ -1,7 +1,7 @@
 """
 Yogrt Slide Module
 
-Slide クラスとレンダリングパイプラインを定義。
+Defines Slide class and rendering pipeline.
 """
 
 from typing import Callable
@@ -13,7 +13,7 @@ from .core import Component, Context, render, walk, Transform, HtmlTransform, Re
 # ============================================================================
 
 Plugin = Callable[['Slide'], 'Slide']
-"""Plugin の型定義: Slide → Slide の関数"""
+"""Plugin type definition: Slide → Slide function"""
 
 
 # ============================================================================
@@ -22,16 +22,16 @@ Plugin = Callable[['Slide'], 'Slide']
 
 class Slide:
     """
-    スライド全体を表すコンテナ
+    Container representing an entire slide deck
 
-    ページのリストとレンダリング設定を保持する。
-    Plugin による拡張をサポート。
+    Holds a list of pages and rendering configuration.
+    Supports extension through plugins.
 
     Attributes:
-        pages: ページのリスト（各ページは Component）
-        context: レンダリングコンテキスト
-        transforms: 適用する変換関数のリスト
-        html_transforms: HTML変換関数のリスト
+        pages: List of pages (each page is a Component)
+        context: Rendering context
+        transforms: List of transformation functions to apply
+        html_transforms: List of HTML transformation functions
 
     Examples:
         >>> from yogrt import create_slide, Page, Header, Text
@@ -41,7 +41,7 @@ class Slide:
     """
 
     def __init__(self) -> None:
-        """Slide を初期化"""
+        """Initialize Slide"""
         self.pages: list[Component] = []
         self.context = Context()
         self.transforms: list[Transform] = []
@@ -49,13 +49,13 @@ class Slide:
 
     def add_page(self, page: Component) -> 'Slide':
         """
-        ページを追加
+        Add a page to the slide
 
         Args:
-            page: 追加するページコンポーネント
+            page: Page component to add
 
         Returns:
-            self（メソッドチェーン用）
+            self (for method chaining)
 
         Examples:
             >>> slide = Slide()
@@ -67,14 +67,14 @@ class Slide:
 
     def add_renderer(self, tag: str, renderer: Renderer) -> 'Slide':
         """
-        カスタムレンダラーを登録
+        Register a custom renderer
 
         Args:
-            tag: コンポーネントのタグ名
-            renderer: レンダラー関数
+            tag: Component tag name
+            renderer: Renderer function
 
         Returns:
-            self（メソッドチェーン用）
+            self (for method chaining)
 
         Examples:
             >>> def my_renderer(comp, ctx):
@@ -88,16 +88,16 @@ class Slide:
 
     def add_transform(self, transformer: Transform) -> 'Slide':
         """
-        変換関数を追加
+        Add a transformation function
 
-        Transform は Component → Component の変換を行う。
-        build() 時にすべてのページに適用される。
+        Transform performs Component → Component transformations.
+        Applied to all pages during build().
 
         Args:
-            transformer: 変換関数
+            transformer: Transformation function
 
         Returns:
-            self（メソッドチェーン用）
+            self (for method chaining)
 
         Examples:
             >>> def add_id(comp):
@@ -115,16 +115,16 @@ class Slide:
 
     def add_html_transform(self, transformer: HtmlTransform) -> 'Slide':
         """
-        HTML変換関数を追加
+        Add an HTML transformation function
 
-        HTML Transform は HTML → HTML の変換を行う。
-        レンダリング後、エクスポート前に適用される。
+        HTML Transform performs HTML → HTML transformations.
+        Applied after rendering, before export.
 
         Args:
-            transformer: HTML変換関数
+            transformer: HTML transformation function
 
         Returns:
-            self（メソッドチェーン用）
+            self (for method chaining)
 
         Examples:
             >>> def add_script(html):
@@ -138,16 +138,16 @@ class Slide:
 
     def use(self, plugin: Plugin) -> 'Slide':
         """
-        プラグインを適用
+        Apply a plugin
 
-        Plugin は Slide → Slide の関数。
-        レンダラー、Transform、HTML Transform などを登録する。
+        Plugin is a Slide → Slide function.
+        Registers renderers, transforms, HTML transforms, etc.
 
         Args:
-            plugin: プラグイン関数
+            plugin: Plugin function
 
         Returns:
-            プラグイン適用後の Slide
+            Slide after applying the plugin
 
         Examples:
             >>> def my_plugin(slide):
@@ -161,13 +161,13 @@ class Slide:
 
     def build(self) -> 'Slide':
         """
-        すべての変換を適用して新しい Slide を返す
+        Apply all transformations and return a new Slide
 
-        Transform をすべてのページの Component 木に適用し、
-        新しい Slide インスタンスを返す（元の Slide は変更しない）。
+        Applies all transforms to each page's Component tree and
+        returns a new Slide instance (does not modify the original Slide).
 
         Returns:
-            変換適用後の新しい Slide インスタンス
+            New Slide instance after applying transformations
 
         Examples:
             >>> slide = Slide()
@@ -183,12 +183,12 @@ class Slide:
             >>> built.pages[0]['props']['class']
             'styled'
         """
-        # 新しい Slide を作成（immutable パターン）
+        # Create new Slide (immutable pattern)
         new_slide = Slide()
         new_slide.context = self.context
         new_slide.html_transforms = self.html_transforms
 
-        # すべての変換を各ページに適用
+        # Apply all transforms to each page
         for page in self.pages:
             transformed_page = page
             for transformer in self.transforms:
@@ -199,16 +199,16 @@ class Slide:
 
     def export(self, path: str) -> None:
         """
-        スライドをHTMLファイルとしてエクスポート
+        Export the slide as an HTML file
 
-        パイプライン:
-        1. Build (Transform 適用)
-        2. Render (各ページを HTML に変換)
-        3. HTML Transform 適用
-        4. ファイル書き込み
+        Pipeline:
+        1. Build (apply transforms)
+        2. Render (convert each page to HTML)
+        3. Apply HTML transforms
+        4. Write to file
 
         Args:
-            path: 出力ファイルパス
+            path: Output file path
 
         Examples:
             >>> slide = Slide()
@@ -216,38 +216,38 @@ class Slide:
             <yogrt.slide.Slide object at ...>
             >>> slide.export("output.html")  # doctest: +SKIP
         """
-        # 1. ビルド（変換適用）
+        # 1. Build (apply transforms)
         built = self.build()
 
-        # 2. コンテキスト設定
+        # 2. Set context
         built.context.total_pages = len(built.pages)
 
-        # 3. 各ページをレンダリング
+        # 3. Render each page
         html_pages = []
         for i, page in enumerate(built.pages, 1):
             built.context.current_page = i
             html_pages.append(render(page, built.context))
 
-        # 4. HTML生成
+        # 4. Generate HTML
         html = built._generate_html(html_pages)
 
-        # 5. HTML変換を適用
+        # 5. Apply HTML transforms
         for html_transformer in built.html_transforms:
             html = html_transformer(html)
 
-        # 6. ファイル書き込み
+        # 6. Write to file
         with open(path, 'w', encoding='utf-8') as f:
             f.write(html)
 
     def _generate_html(self, pages: list[str]) -> str:
         """
-        HTMLテンプレート生成
+        Generate HTML template
 
         Args:
-            pages: レンダリング済みのページHTML
+            pages: Rendered page HTML
 
         Returns:
-            完全なHTML文書
+            Complete HTML document
         """
         css = self.context.store.get('custom_css', '')
 
