@@ -1,1 +1,267 @@
-... 🥛
+# Yogrt 🥛
+
+**Programmable Slide Framework with Lisp-like Philosophy**
+
+Yogrt is a Python-based slide framework that treats slides as code. Inspired by Lisp's elegant simplicity, Yogrt provides minimal primitives that compose into powerful slide presentations.
+
+## Features
+
+- 🎯 **Programmable**: Write slides as Python code
+- 🔧 **Extensible**: Infinite customization through plugins
+- 🪶 **Simple**: Minimal core with 3 primitives
+- 🧩 **Composable**: Build complex slides from small parts
+- 📊 **Data-Friendly**: Direct matplotlib/pandas integration
+- 🎨 **Customizable**: Full control over rendering
+
+## Philosophy
+
+Yogrt adopts Lisp's design principles:
+
+1. **Minimal Primitives**: Everything built from `Component`, `render`, and `transform`
+2. **Code as Data**: Components are plain Python dicts
+3. **Functions First**: Everything is a function, no complex OOP
+4. **Immutability**: Predictable transformations
+
+## Installation
+
+```bash
+pip install yogrt
+```
+
+## Quick Start
+
+```python
+from yogrt import create_slide, Page, Header, Text
+
+slide = create_slide()
+
+slide.add_page(Page(
+    Header("Hello, Yogrt!", level=1),
+    Text("A programmable slide framework")
+))
+
+slide.export("output.html")
+```
+
+## Basic Example
+
+```python
+from yogrt import create_slide, Page, Header, Text, TwoColumn, List
+
+slide = create_slide()
+
+# Title page
+slide.add_page(Page(
+    Header("My Presentation", level=1),
+    Text("Author: Your Name")
+))
+
+# Content with layout
+slide.add_page(Page(
+    Header("Key Points", level=1),
+    TwoColumn(
+        List(
+            "First point",
+            "Second point",
+            "Third point"
+        ),
+        Text("Details on the right side")
+    )
+))
+
+slide.export("presentation.html")
+```
+
+## Data Visualization
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+from yogrt import create_slide, Page, Header, Image
+
+# Generate data
+x = np.linspace(0, 10, 100)
+y = np.sin(x)
+
+fig, ax = plt.subplots()
+ax.plot(x, y)
+ax.set_title("Sine Wave")
+
+# Add to slide
+slide = create_slide()
+slide.add_page(Page(
+    Header("Data Visualization", level=1),
+    Image(fig, caption="sin(x) from 0 to 10")
+))
+
+slide.export("data_viz.html")
+```
+
+## Extensions with Plugins
+
+```python
+from yogrt import create_slide, Page, Text
+from yogrt.plugins.mathjax import mathjax_plugin, Math
+
+slide = create_slide()
+slide.use(mathjax_plugin())
+
+slide.add_page(Page(
+    Text("The famous equation:"),
+    Math(r"E = mc^2", display=True)
+))
+
+slide.export("with_math.html")
+```
+
+## Architecture
+
+Yogrt's core consists of three primitives:
+
+### 1. Component (Data)
+
+```python
+Component = {
+    'tag': str,           # Component type
+    'props': dict,        # Properties
+    'children': list,     # Child components
+}
+```
+
+### 2. Renderer (Component → HTML)
+
+```python
+def my_renderer(component: Component, context: Context) -> str:
+    return f"<div>{component['props']}</div>"
+```
+
+### 3. Transform (Component → Component)
+
+```python
+def my_transform(component: Component) -> Component:
+    # Modify component
+    return modified_component
+```
+
+## Creating Custom Components
+
+```python
+from yogrt import Component
+
+def Alert(message: str, level: str = "info") -> Component:
+    return {
+        'tag': 'alert',
+        'props': {'message': message, 'level': level},
+        'children': []
+    }
+
+# Register renderer
+def render_alert(comp, ctx):
+    message = comp['props']['message']
+    level = comp['props']['level']
+    return f'<div class="alert alert-{level}">{message}</div>'
+
+slide.add_renderer('alert', render_alert)
+
+# Use it
+slide.add_page(Page(
+    Alert("Important message!", level="warning")
+))
+```
+
+## Creating Plugins
+
+```python
+def my_plugin(option: str):
+    def plugin(slide):
+        # Add custom renderer
+        slide.add_renderer('my-tag', my_renderer)
+
+        # Add transform
+        slide.add_transform(my_transform)
+
+        return slide
+    return plugin
+
+# Use plugin
+slide.use(my_plugin(option="value"))
+```
+
+## Available Plugins
+
+- **BibTeX**: Citation management
+- **MathJax**: LaTeX math rendering
+- **TOC**: Table of contents generation
+- **Code Execution**: Run and display code output
+
+See [SPECIFICATION.md](SPECIFICATION.md) for complete documentation.
+
+## Project Structure
+
+```
+yogrt/
+├── yogrt/
+│   ├── core.py          # Core primitives
+│   ├── slide.py         # Slide container
+│   ├── components.py    # Standard components
+│   ├── renderers.py     # Standard renderers
+│   └── plugins/         # Plugin implementations
+├── examples/            # Usage examples
+├── tests/               # Test suite
+├── SPECIFICATION.md     # Complete specification
+└── README.md           # This file
+```
+
+## Development
+
+```bash
+# Install dev dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Type checking
+mypy yogrt
+
+# Format code
+black yogrt
+```
+
+## Why "Yogrt"?
+
+The name comes from "Yogurt" (ヨーグルト), representing something:
+- Simple and pure (like Lisp)
+- Healthy and natural (minimal dependencies)
+- Customizable (add your own toppings/plugins)
+
+The unconventional spelling makes it unique and easy to search.
+
+## Comparison with Other Tools
+
+| Feature | Yogrt | Marp | reveal.js | PowerPoint |
+|---------|-------|------|-----------|------------|
+| Programmable | ✅ | Partial | Partial | ❌ |
+| Python Integration | ✅ | ❌ | ❌ | ❌ |
+| Git-friendly | ✅ | ✅ | ✅ | ❌ |
+| Extensible | ✅ | Limited | Limited | ❌ |
+| Data Visualization | ✅ | ❌ | Partial | Partial |
+| Code Execution | ✅ | ❌ | ❌ | ❌ |
+
+## License
+
+MIT License - see LICENSE file
+
+## Contributing
+
+Contributions welcome! Please see CONTRIBUTING.md
+
+## Links
+
+- 📖 [Complete Specification](SPECIFICATION.md)
+- 🐛 [Issue Tracker](https://github.com/abap34/yogrt/issues)
+- 💬 [Discussions](https://github.com/abap34/yogrt/discussions)
+
+---
+
+Made with ❤️ and functional programming
