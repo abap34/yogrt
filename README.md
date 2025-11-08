@@ -20,9 +20,9 @@ Yogrt is a Python-based slide framework that treats slides as code. Inspired by 
 Yogrt adopts Lisp's design principles:
 
 1. **Minimal Primitives**: Everything built from `Component`, `render`, and `transform`
-2. **Code as Data**: Components are plain Python dicts (like S-expressions)
+2. **Code as Data**: Components are immutable dataclasses with `to_dict()`/`from_dict()` (homoiconicity like S-expressions)
 3. **Functions First**: Everything is a function, no complex OOP
-4. **Immutability**: Predictable transformations
+4. **Immutability**: Frozen dataclasses for predictable transformations
 
 ## Installation
 
@@ -114,54 +114,62 @@ Yogrt's core consists of three primitives:
 ### 1. Component (Data)
 
 ```python
-Component = {
-    'tag': str,           # Component type
-    'props': dict,        # Properties
-    'children': list,     # Child components
-}
+@dataclass(frozen=True)
+class Component:
+    tag: str                          # Component type
+    props: dict[str, Any]            # Properties
+    children: tuple['Component', ...] # Child components (immutable)
+    key: str | None = None           # Optional key
 ```
 
-All slide elements are represented as plain Python dictionaries, similar to Lisp's S-expressions.
+All slide elements are immutable dataclass instances. They support `to_dict()`/`from_dict()` for homoiconicity, similar to Lisp's S-expressions.
 
 ### 2. Renderer (Component → HTML)
 
 ```python
 def my_renderer(component: Component, context: Context) -> str:
-    content = component['props']['content']
+    content = component.props['content']
     return f"<div>{content}</div>"
 ```
 
-Renderers convert components into HTML strings. This is analogous to Lisp's `eval`.
+Renderers convert components into HTML strings using attribute access. This is analogous to Lisp's `eval`.
 
 ### 3. Transform (Component → Component)
 
 ```python
+from dataclasses import replace
+
 def my_transform(component: Component) -> Component:
-    # Modify component tree
-    props = component.get('props', {})
-    props['class'] = 'styled'
-    return {**component, 'props': props}
+    # Modify component tree immutably
+    props = {**component.props, 'class': 'styled'}
+    return replace(component, props=props)
 ```
 
-Transforms perform Component → Component conversions. This is analogous to Lisp's macro expansion.
+Transforms perform Component → Component conversions using `dataclasses.replace()` for immutability. This is analogous to Lisp's macro expansion.
 
 ## Creating Custom Components
 
 ```python
-from yogrt import Component
+from yogrt.core import Component, Context
 from typing import Any
 
-def Alert(message: str, level: str = "info", **props: Any) -> Component:
-    return {
-        'tag': 'alert',
-        'props': {'message': message, 'level': level, **props},
-        'children': []
-    }
+# Define a custom component type
+class AlertComponent(Component):
+    """Alert component type marker"""
+    pass
+
+def Alert(message: str, level: str = "info", **props: Any) -> AlertComponent:
+    """Factory function for Alert component"""
+    return AlertComponent(
+        tag='alert',
+        props={'message': message, 'level': level, **props},
+        children=()
+    )
 
 # Register renderer
 def render_alert(comp: Component, ctx: Context) -> str:
-    message = comp['props']['message']
-    level = comp['props']['level']
+    message = comp.props['message']
+    level = comp.props['level']
     return f'<div class="alert alert-{level}">{message}</div>'
 
 slide = create_slide()
