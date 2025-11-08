@@ -25,16 +25,16 @@ def Text(content: str, **props: Any) -> Component:
 
     Examples:
         >>> text = Text("Hello, world!")
-        >>> text['tag']
+        >>> text.tag
         'text'
-        >>> text['props']['content']
+        >>> text.props['content']
         'Hello, world!'
     """
-    return {
-        'tag': 'text',
-        'props': {'content': content, **props},
-        'children': []
-    }
+    return Component(
+        tag='text',
+        props={'content': content, **props},
+        children=()
+    )
 
 
 def Header(text: str, level: int = 1, **props: Any) -> Component:
@@ -51,18 +51,18 @@ def Header(text: str, level: int = 1, **props: Any) -> Component:
 
     Examples:
         >>> header = Header("Introduction", level=2, id="intro")
-        >>> header['tag']
+        >>> header.tag
         'header'
-        >>> header['props']['level']
+        >>> header.props['level']
         2
-        >>> header['props']['id']
+        >>> header.props['id']
         'intro'
     """
-    return {
-        'tag': 'header',
-        'props': {'text': text, 'level': level, **props},
-        'children': []
-    }
+    return Component(
+        tag='header',
+        props={'text': text, 'level': level, **props},
+        children=()
+    )
 
 
 def Image(src: Any, caption: str | None = None, **props: Any) -> Component:
@@ -79,16 +79,16 @@ def Image(src: Any, caption: str | None = None, **props: Any) -> Component:
 
     Examples:
         >>> img = Image("photo.jpg", caption="A beautiful sunset")
-        >>> img['tag']
+        >>> img.tag
         'image'
-        >>> img['props']['caption']
+        >>> img.props['caption']
         'A beautiful sunset'
     """
-    return {
-        'tag': 'image',
-        'props': {'src': src, 'caption': caption, **props},
-        'children': []
-    }
+    return Component(
+        tag='image',
+        props={'src': src, 'caption': caption, **props},
+        children=()
+    )
 
 
 def Code(code: str, lang: str = "python", **props: Any) -> Component:
@@ -105,16 +105,16 @@ def Code(code: str, lang: str = "python", **props: Any) -> Component:
 
     Examples:
         >>> code = Code("print('Hello')", lang="python")
-        >>> code['tag']
+        >>> code.tag
         'code'
-        >>> code['props']['lang']
+        >>> code.props['lang']
         'python'
     """
-    return {
-        'tag': 'code',
-        'props': {'code': code, 'lang': lang, **props},
-        'children': []
-    }
+    return Component(
+        tag='code',
+        props={'code': code, 'lang': lang, **props},
+        children=()
+    )
 
 
 def Link(url: str, text: str, **props: Any) -> Component:
@@ -131,14 +131,14 @@ def Link(url: str, text: str, **props: Any) -> Component:
 
     Examples:
         >>> link = Link("https://example.com", "Visit Example")
-        >>> link['props']['url']
+        >>> link.props['url']
         'https://example.com'
     """
-    return {
-        'tag': 'link',
-        'props': {'url': url, 'text': text, **props},
-        'children': []
-    }
+    return Component(
+        tag='link',
+        props={'url': url, 'text': text, **props},
+        children=()
+    )
 
 
 # ============================================================================
@@ -163,16 +163,16 @@ def Page(*children: Component, **props: Any) -> Component:
         ...     Header("Title", level=1),
         ...     Text("Content")
         ... )
-        >>> page['tag']
+        >>> page.tag
         'page'
-        >>> len(page['children'])
+        >>> len(page.children)
         2
     """
-    return {
-        'tag': 'page',
-        'props': props,
-        'children': list(children)
-    }
+    return Component(
+        tag='page',
+        props=props,
+        children=children
+    )
 
 
 def VStack(*children: Component, gap: str = "1rem", **props: Any) -> Component:
@@ -195,16 +195,16 @@ def VStack(*children: Component, gap: str = "1rem", **props: Any) -> Component:
         ...     Text("Second"),
         ...     gap="2rem"
         ... )
-        >>> stack['tag']
+        >>> stack.tag
         'vstack'
-        >>> stack['props']['gap']
+        >>> stack.props['gap']
         '2rem'
     """
-    return {
-        'tag': 'vstack',
-        'props': {'gap': gap, **props},
-        'children': list(children)
-    }
+    return Component(
+        tag='vstack',
+        props={'gap': gap, **props},
+        children=children
+    )
 
 
 def HStack(*children: Component, gap: str = "1rem", **props: Any) -> Component:
@@ -227,14 +227,14 @@ def HStack(*children: Component, gap: str = "1rem", **props: Any) -> Component:
         ...     Text("Right"),
         ...     gap="1rem"
         ... )
-        >>> stack['tag']
+        >>> stack.tag
         'hstack'
     """
-    return {
-        'tag': 'hstack',
-        'props': {'gap': gap, **props},
-        'children': list(children)
-    }
+    return Component(
+        tag='hstack',
+        props={'gap': gap, **props},
+        children=children
+    )
 
 
 def TwoColumn(left: Component, right: Component, **props: Any) -> Component:
@@ -256,16 +256,16 @@ def TwoColumn(left: Component, right: Component, **props: Any) -> Component:
         ...     Text("Left content"),
         ...     Text("Right content")
         ... )
-        >>> layout['tag']
+        >>> layout.tag
         'two-column'
-        >>> len(layout['children'])
+        >>> len(layout.children)
         2
     """
-    return {
-        'tag': 'two-column',
-        'props': props,
-        'children': [left, right]
-    }
+    return Component(
+        tag='two-column',
+        props=props,
+        children=(left, right)
+    )
 
 
 def Grid(*children: Component, columns: int = 2, gap: str = "1rem", **props: Any) -> Component:
@@ -288,14 +288,14 @@ def Grid(*children: Component, columns: int = 2, gap: str = "1rem", **props: Any
         ...     Text("1"), Text("2"), Text("3"), Text("4"),
         ...     columns=2
         ... )
-        >>> grid['props']['columns']
+        >>> grid.props['columns']
         2
     """
-    return {
-        'tag': 'grid',
-        'props': {'columns': columns, 'gap': gap, **props},
-        'children': list(children)
-    }
+    return Component(
+        tag='grid',
+        props={'columns': columns, 'gap': gap, **props},
+        children=children
+    )
 
 
 def Container(*children: Component, **props: Any) -> Component:
@@ -317,14 +317,14 @@ def Container(*children: Component, **props: Any) -> Component:
         ...     Text("Item 2"),
         ...     class_name="my-container"
         ... )
-        >>> container['tag']
+        >>> container.tag
         'container'
     """
-    return {
-        'tag': 'container',
-        'props': props,
-        'children': list(children)
-    }
+    return Component(
+        tag='container',
+        props=props,
+        children=children
+    )
 
 
 # ============================================================================
@@ -345,13 +345,13 @@ def List(*items: str | Component, ordered: bool = False, **props: Any) -> Compon
 
     Examples:
         >>> lst = List("Item 1", "Item 2", "Item 3")
-        >>> lst['tag']
+        >>> lst.tag
         'list'
-        >>> len(lst['children'])
+        >>> len(lst.children)
         3
 
         >>> lst_ordered = List("First", "Second", ordered=True)
-        >>> lst_ordered['props']['ordered']
+        >>> lst_ordered.props['ordered']
         True
     """
     # Convert strings to Text components
@@ -362,11 +362,11 @@ def List(*items: str | Component, ordered: bool = False, **props: Any) -> Compon
         else:
             children.append(item)
 
-    return {
-        'tag': 'list',
-        'props': {'ordered': ordered, **props},
-        'children': children
-    }
+    return Component(
+        tag='list',
+        props={'ordered': ordered, **props},
+        children=tuple(children)
+    )
 
 
 # ============================================================================
@@ -388,16 +388,16 @@ def RawHtml(html: str, **props: Any) -> Component:
 
     Examples:
         >>> raw = RawHtml("<div class='custom'>Custom HTML</div>")
-        >>> raw['tag']
+        >>> raw.tag
         'raw-html'
-        >>> raw['props']['html']
-        '<div class=\'custom\'>Custom HTML</div>'
+        >>> raw.props['html']
+        '<div class=\\'custom\\'>Custom HTML</div>'
     """
-    return {
-        'tag': 'raw-html',
-        'props': {'html': html, **props},
-        'children': []
-    }
+    return Component(
+        tag='raw-html',
+        props={'html': html, **props},
+        children=()
+    )
 
 
 def Spacer(height: str = "1rem", **props: Any) -> Component:
@@ -415,14 +415,14 @@ def Spacer(height: str = "1rem", **props: Any) -> Component:
 
     Examples:
         >>> spacer = Spacer(height="2rem")
-        >>> spacer['props']['height']
+        >>> spacer.props['height']
         '2rem'
     """
-    return {
-        'tag': 'spacer',
-        'props': {'height': height, **props},
-        'children': []
-    }
+    return Component(
+        tag='spacer',
+        props={'height': height, **props},
+        children=()
+    )
 
 
 def Divider(**props: Any) -> Component:
@@ -437,11 +437,11 @@ def Divider(**props: Any) -> Component:
 
     Examples:
         >>> divider = Divider()
-        >>> divider['tag']
+        >>> divider.tag
         'divider'
     """
-    return {
-        'tag': 'divider',
-        'props': props,
-        'children': []
-    }
+    return Component(
+        tag='divider',
+        props=props,
+        children=()
+    )

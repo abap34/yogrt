@@ -8,44 +8,86 @@ Defines minimal primitives:
 - walk: Component tree traversal
 """
 
-from typing import TypedDict, Any, Callable, cast
-from dataclasses import dataclass, field
+from typing import Any, Callable
+from dataclasses import dataclass, field, asdict
 
 
 # ============================================================================
 # Type Definitions
 # ============================================================================
 
-class Component(TypedDict, total=False):
+@dataclass(frozen=True)
+class Component:
     """
     Component type definition
 
     A tree structure equivalent to Lisp's S-expressions.
     All slide elements are represented by this type.
 
+    Immutable by design (frozen=True) to ensure predictable transformations.
+
     Attributes:
         tag: String identifying the component type
-        props: Component-specific properties
-        children: List of child components
+        props: Component-specific properties (frozen dict)
+        children: Tuple of child components (immutable)
         key: Unique component identifier (optional)
 
     Examples:
-        >>> text_comp: Component = {
-        ...     'tag': 'text',
-        ...     'props': {'content': 'Hello'},
-        ...     'children': []
-        ... }
+        >>> text_comp = Component(
+        ...     tag='text',
+        ...     props={'content': 'Hello'},
+        ...     children=()
+        ... )
 
-        >>> page_comp: Component = {
-        ...     'tag': 'page',
-        ...     'props': {},
-        ...     'children': [text_comp]
-        ... }
+        >>> page_comp = Component(
+        ...     tag='page',
+        ...     props={},
+        ...     children=(text_comp,)
+        ... )
     """
     tag: str
-    props: dict[str, Any]
-    children: list['Component']
-    key: str | None
+    props: dict[str, Any] = field(default_factory=dict)
+    children: tuple['Component', ...] = field(default_factory=tuple)
+    key: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Convert Component to dictionary (homoiconicity)
+
+        Enables treating components as data, like Lisp S-expressions.
+
+        Returns:
+            Dictionary representation
+        """
+        return {
+            'tag': self.tag,
+            'props': self.props.copy(),
+            'children': [child.to_dict() for child in self.children],
+            'key': self.key
+        }
+
+    @staticmethod
+    def from_dict(data: dict[str, Any]) -> 'Component':
+        """
+        Create Component from dictionary (homoiconicity)
+
+        Enables treating data as components, like Lisp S-expressions.
+
+        Args:
+            data: Dictionary representation
+
+        Returns:
+            Component instance
+        """
+        children_data = data.get('children', [])
+        children = tuple(Component.from_dict(child) for child in children_data)
+
+        return Component(
+            tag=data['tag'],
+            props=data.get('props', {}),
+            children=children,
+            key=data.get('key')
+        )
 
 
 # Type aliases
@@ -114,13 +156,12 @@ def render(component: Component, context: Context) -> str:
         HTML string
 
     Examples:
-        >>> comp: Component = {'tag': 'text', 'props': {'content': 'Hello'}, 'children': []}
-        >>> ctx = Context(renderers={'text': lambda c, ctx: f"<p>{c['props']['content']}</p>"})
+        >>> comp = Component(tag='text', props={'content': 'Hello'}, children=())
+        >>> ctx = Context(renderers={'text': lambda c, ctx: f"<p>{c.props['content']}</p>"})
         >>> render(comp, ctx)
         '<p>Hello</p>'
     """
-    tag = component['tag']
-    renderer = context.get_renderer(tag)
+    renderer = context.get_renderer(component.tag)
     return renderer(component, context)
 
 
@@ -140,10 +181,13 @@ def transform(component: Component, transformer: Transform) -> Component:
 
     Examples:
         >>> def make_bold(comp: Component) -> Component:
-        ...     return {'tag': 'bold', 'props': {}, 'children': [comp]}
-        >>> comp: Component = {'tag': 'text', 'props': {'content': 'Hi'}, 'children': []}
-        >>> transform(comp, make_bold)
-        {'tag': 'bold', 'props': {}, 'children': [{'tag': 'text', 'props': {'content': 'Hi'}, 'children': []}]}
+        ...     return Component(tag='bold', props={}, children=(comp,))
+        >>> comp = Component(tag='text', props={'content': 'Hi'}, children=())
+        >>> result = transform(comp, make_bold)
+        >>> result.tag
+        'bold'
+        >>> result.children[0].tag
+        'text'
     """
     return transformer(component)
 
@@ -162,29 +206,29 @@ def walk(component: Component, f: Callable[[Component], Component]) -> Component
         Transformed component tree
 
     Examples:
+        >>> from dataclasses import replace
         >>> def add_class(comp: Component) -> Component:
-        ...     props = comp.get('props', {})
-        ...     props['class'] = 'styled'
-        ...     return {**comp, 'props': props}
-        >>> root: Component = {
-        ...     'tag': 'page',
-        ...     'props': {},
-        ...     'children': [
-        ...         {'tag': 'text', 'props': {}, 'children': []}
-        ...     ]
-        ... }
+        ...     new_props = {**comp.props, 'class': 'styled'}
+        ...     return replace(comp, props=new_props)
+        >>> root = Component(
+        ...     tag='page',
+        ...     props={},
+        ...     children=(
+        ...         Component(tag='text', props={}, children=()),
+        ...     )
+        ... )
         >>> result = walk(root, add_class)
-        >>> result['props']['class']
+        >>> result.props['class']
         'styled'
-        >>> result['children'][0]['props']['class']
+        >>> result.children[0].props['class']
         'styled'
     """
     # First process children recursively
-    children = component.get('children', [])
-    new_children = [walk(child, f) for child in children]
+    new_children = tuple(walk(child, f) for child in component.children)
 
-    # Create component with updated children
-    new_component = cast(Component, {**component, 'children': new_children})
+    # Create component with updated children using dataclass replace
+    from dataclasses import replace
+    new_component = replace(component, children=new_children)
 
     # Apply function
     return f(new_component)
@@ -208,10 +252,8 @@ def default_renderer(component: Component, context: Context) -> str:
     Returns:
         HTML string
     """
-    tag = component['tag']
-    children = component.get('children', [])
-    children_html = [render(child, context) for child in children]
-    return f'<div class="{tag}">{"".join(children_html)}</div>'
+    children_html = [render(child, context) for child in component.children]
+    return f'<div class="{component.tag}">{"".join(children_html)}</div>'
 
 
 # ============================================================================
@@ -235,15 +277,15 @@ def find_components(
         List of components satisfying the condition
 
     Examples:
-        >>> root: Component = {
-        ...     'tag': 'page',
-        ...     'props': {},
-        ...     'children': [
-        ...         {'tag': 'header', 'props': {'level': 1}, 'children': []},
-        ...         {'tag': 'text', 'props': {}, 'children': []}
-        ...     ]
-        ... }
-        >>> headers = find_components(root, lambda c: c['tag'] == 'header')
+        >>> root = Component(
+        ...     tag='page',
+        ...     props={},
+        ...     children=(
+        ...         Component(tag='header', props={'level': 1}, children=()),
+        ...         Component(tag='text', props={}, children=()),
+        ...     )
+        ... )
+        >>> headers = find_components(root, lambda c: c.tag == 'header')
         >>> len(headers)
         1
     """
@@ -252,7 +294,7 @@ def find_components(
     def visit(comp: Component) -> None:
         if predicate(comp):
             result.append(comp)
-        for child in comp.get('children', []):
+        for child in comp.children:
             visit(child)
 
     visit(root)
@@ -271,20 +313,19 @@ def filter_by_tag(root: Component, tag: str) -> list[Component]:
         List of components with the specified tag
 
     Examples:
-        >>> from typing import cast
-        >>> root = cast(Component, {
-        ...     'tag': 'page',
-        ...     'props': {},
-        ...     'children': [
-        ...         {'tag': 'text', 'props': {'content': 'A'}, 'children': []},
-        ...         {'tag': 'text', 'props': {'content': 'B'}, 'children': []}
-        ...     ]
-        ... })
+        >>> root = Component(
+        ...     tag='page',
+        ...     props={},
+        ...     children=(
+        ...         Component(tag='text', props={'content': 'A'}, children=()),
+        ...         Component(tag='text', props={'content': 'B'}, children=()),
+        ...     )
+        ... )
         >>> texts = filter_by_tag(root, 'text')
         >>> len(texts)
         2
     """
-    return find_components(root, lambda c: c['tag'] == tag)
+    return find_components(root, lambda c: c.tag == tag)
 
 
 def map_components(
