@@ -57,13 +57,17 @@ body {
     overflow: hidden !important;
 }
 
-/* Hide pages by default - they will be wrapped in slide-page */
-.page {
-    display: none;
+/* Before JavaScript initialization, hide all pages except when being wrapped */
+body:not(.slide-mode) .page {
+    position: absolute;
+    left: -9999px;
+    visibility: hidden;
 }
 
 .slide-container {
-    position: relative;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100vw;
     height: 100vh;
     overflow: hidden;
@@ -81,8 +85,10 @@ body {
     overflow: auto;
 }
 
-/* Show pages when inside slide-page */
 .slide-page .page {
+    position: relative !important;
+    left: auto !important;
+    visibility: visible !important;
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -198,6 +204,9 @@ body {
         // Setup controls
         document.getElementById('prev-slide').addEventListener('click', () => goToSlide(currentSlide - 1));
         document.getElementById('next-slide').addEventListener('click', () => goToSlide(currentSlide + 1));
+
+        // Enable slide mode
+        document.body.classList.add('slide-mode');
 
         // Show first slide
         goToSlide(0);
@@ -407,6 +416,11 @@ def speaker_notes_plugin() -> Plugin:
         presenterMode = !presenterMode;
         const presenterDiv = document.getElementById('presenter-mode');
 
+        if (!presenterDiv) {
+            console.error('Presenter mode div not found');
+            return;
+        }
+
         if (presenterMode) {
             presenterDiv.classList.add('active');
             updatePresenterView();
@@ -466,8 +480,11 @@ def speaker_notes_plugin() -> Plugin:
         }
     });
 
-    // Button click
-    document.getElementById('presenter-toggle').addEventListener('click', togglePresenterMode);
+    // Button click - wait for DOM
+    const presenterToggleBtn = document.getElementById('presenter-toggle');
+    if (presenterToggleBtn) {
+        presenterToggleBtn.addEventListener('click', togglePresenterMode);
+    }
 
     // Update presenter view when slide changes
     document.addEventListener('keydown', (e) => {
