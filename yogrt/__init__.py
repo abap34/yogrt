@@ -204,4 +204,5 @@ __all__ = [
     'SpeakerNoteComponent',
     'slide_navigation_plugin',
     'speaker_notes_plugin',
+    'syntax_highlighting_plugin',
 ]

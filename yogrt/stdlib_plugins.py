@@ -145,22 +145,24 @@ body {
         const container = document.createElement('div');
         container.className = 'slide-container';
 
+        // Clear body and add container
+        const bodyContent = document.body.innerHTML;
+        document.body.innerHTML = '';
+        document.body.appendChild(container);
+
         // Wrap each page in a slide-page div
         pages.forEach((page, index) => {
             const slideDiv = document.createElement('div');
             slideDiv.className = 'slide-page';
             slideDiv.dataset.slideIndex = index;
 
-            // Move page into slide div
-            page.parentNode.insertBefore(slideDiv, page);
+            // Add page to slide div
             slideDiv.appendChild(page);
             slides.push(slideDiv);
-        });
 
-        // Wrap all slides in container
-        document.body.innerHTML = '';
-        slides.forEach(slide => container.appendChild(slide));
-        document.body.appendChild(container);
+            // Add to container
+            container.appendChild(slideDiv);
+        });
 
         // Add indicator
         const indicator = document.createElement('div');
