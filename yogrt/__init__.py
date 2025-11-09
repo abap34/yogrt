@@ -89,6 +89,15 @@ from .components import (
 # Renderer exports
 from .renderers import DEFAULT_RENDERERS
 
+# Standard library plugins
+from .stdlib_plugins import (
+    SpeakerNote,
+    SpeakerNoteComponent,
+    slide_navigation_plugin,
+    speaker_notes_plugin,
+    syntax_highlighting_plugin,
+)
+
 
 # ============================================================================
 # Factory Function
@@ -190,4 +199,9 @@ __all__ = [
     'Bibliography',
     # Renderers
     'DEFAULT_RENDERERS',
+    # Standard library plugins
+    'SpeakerNote',
+    'SpeakerNoteComponent',
+    'slide_navigation_plugin',
+    'speaker_notes_plugin',
 ]

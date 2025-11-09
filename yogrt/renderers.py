@@ -82,8 +82,15 @@ def render_code(component: Component, context: 'Context') -> str:
     # Escape HTML in code
     code_escaped = component.code.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
+    # Wrap in code-container with header and copy button (for syntax highlighting plugin)
     return f'''
-    <pre><code class="language-{component.lang}">{code_escaped}</code></pre>
+    <div class="code-container">
+        <div class="code-header">
+            <span class="code-lang">{component.lang}</span>
+            <button class="code-copy-btn">Copy</button>
+        </div>
+        <pre><code class="language-{component.lang}">{code_escaped}</code></pre>
+    </div>
     '''
 
 
