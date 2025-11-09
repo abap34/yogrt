@@ -144,17 +144,18 @@ body {
         // Create slide container
         const container = document.createElement('div');
         container.className = 'slide-container';
-
-        // Clear body and add container
-        const bodyContent = document.body.innerHTML;
-        document.body.innerHTML = '';
-        document.body.appendChild(container);
+        document.body.insertBefore(container, document.body.firstChild);
 
         // Wrap each page in a slide-page div
         pages.forEach((page, index) => {
             const slideDiv = document.createElement('div');
             slideDiv.className = 'slide-page';
             slideDiv.dataset.slideIndex = index;
+
+            // Remove page from its current position
+            if (page.parentNode) {
+                page.parentNode.removeChild(page);
+            }
 
             // Add page to slide div
             slideDiv.appendChild(page);
