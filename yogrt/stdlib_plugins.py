@@ -54,7 +54,12 @@ def slide_navigation_plugin() -> Plugin:
 body {
     margin: 0;
     padding: 0;
-    overflow: hidden;
+    overflow: hidden !important;
+}
+
+/* Hide pages by default - they will be wrapped in slide-page */
+.page {
+    display: none;
 }
 
 .slide-container {
@@ -74,6 +79,15 @@ body {
     transition: opacity 0.3s ease-in-out;
     pointer-events: none;
     overflow: auto;
+}
+
+/* Show pages when inside slide-page */
+.slide-page .page {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    padding: 2rem;
 }
 
 .slide-page.active {
