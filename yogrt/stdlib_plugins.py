@@ -79,9 +79,7 @@ body:not(.slide-mode) .page {
     left: 0;
     width: 100%;
     height: 100%;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-    pointer-events: none;
+    display: none; /* Hide all slides by default */
     overflow: auto;
 }
 
@@ -97,8 +95,7 @@ body:not(.slide-mode) .page {
 }
 
 .slide-page.active {
-    opacity: 1;
-    pointer-events: auto;
+    display: block; /* Show only active slide */
 }
 
 .slide-indicator {
