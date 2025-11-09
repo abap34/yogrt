@@ -7,37 +7,64 @@ reusable functionality (renderers, transforms, HTML transforms).
 
 from yogrt import create_slide, Page, Header, Text, Component, Context, Slide, Plugin
 from typing import Any
+from dataclasses import dataclass
 
 
 # ============================================================================
-# Define Custom Components for Plugins
+# Define Custom Component Classes for Plugins
 # ============================================================================
 
-def Highlight(text: str, color: str = "yellow", **props: Any) -> Component:
+@dataclass(frozen=True)
+class HighlightComponent:
     """Highlight text with background color"""
-    return Component(
-        tag='highlight',
-        props={'text': text, 'color': color, **props},
-        children=()
-    )
+    text: str
+    color: str = "yellow"
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "highlight"
 
 
-def Quote(text: str, author: str = "", **props: Any) -> Component:
+@dataclass(frozen=True)
+class QuoteComponent:
     """Blockquote with optional author attribution"""
-    return Component(
-        tag='quote',
-        props={'text': text, 'author': author, **props},
-        children=()
-    )
+    text: str
+    author: str = ""
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "quote"
 
 
-def PageNumber(**props: Any) -> Component:
+@dataclass(frozen=True)
+class PageNumberComponent:
     """Page number placeholder (will be filled by transform)"""
-    return Component(
-        tag='page-number',
-        props=props,
-        children=()
-    )
+    key: str | None = None
+
+    @property
+    def tag(self) -> str:
+        return "page-number"
+
+
+# ============================================================================
+# Factory Functions
+# ============================================================================
+
+def Highlight(text: str, color: str = "yellow", **kwargs: Any) -> HighlightComponent:
+    """Create a Highlight component"""
+    return HighlightComponent(text=text, color=color, key=kwargs.get('key'))
+
+
+def Quote(text: str, author: str = "", **kwargs: Any) -> QuoteComponent:
+    """Create a Quote component"""
+    return QuoteComponent(text=text, author=author, key=kwargs.get('key'))
+
+
+def PageNumber(**kwargs: Any) -> PageNumberComponent:
+    """Create a PageNumber component"""
+    return PageNumberComponent(key=kwargs.get('key'))
 
 
 # ============================================================================
@@ -52,8 +79,10 @@ def highlight_plugin() -> Plugin:
         Plugin function
     """
     def render_highlight(component: Component, context: Context) -> str:
-        text = component.props['text']
-        color = component.props['color']
+        assert isinstance(component, HighlightComponent)
+
+        text = component.text
+        color = component.color
 
         colors = {
             'yellow': '#fef08a',
@@ -85,8 +114,10 @@ def quote_plugin() -> Plugin:
         Plugin function
     """
     def render_quote(component: Component, context: Context) -> str:
-        text = component.props['text']
-        author = component.props.get('author', '')
+        assert isinstance(component, QuoteComponent)
+
+        text = component.text
+        author = component.author
 
         author_html = f'<footer style="margin-top: 0.5rem; color: #6b7280;">— {author}</footer>' if author else ''
 
@@ -125,6 +156,8 @@ def page_number_plugin(position: str = "bottom-right") -> Plugin:
         Plugin function
     """
     def render_page_number(component: Component, context: Context) -> str:
+        assert isinstance(component, PageNumberComponent)
+
         current = context.current_page
         total = context.total_pages
 
@@ -145,13 +178,14 @@ def page_number_plugin(position: str = "bottom-right") -> Plugin:
     def add_page_number(component: Component) -> Component:
         """Transform that adds page number to each page"""
         from dataclasses import replace
+        from yogrt.core import PageComponent
 
-        if component.tag != 'page':
+        if not isinstance(component, PageComponent):
             return component
 
         # Add page number component to page
         page_number = PageNumber()
-        new_children = component.children + (page_number,)
+        new_children = component.children + (page_number,)  # type: ignore[arg-type]
 
         return replace(component, children=new_children)
 

@@ -14,8 +14,10 @@ from yogrt import (
 def main():
     slide = create_slide()
 
-    # Add custom CSS for better styling
-    slide.context.store['custom_css'] = """
+    # Add custom CSS via HTML transform
+    def add_custom_css(html: str) -> str:
+        custom_css = """
+        <style>
         .feature-box {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -36,7 +38,11 @@ def main():
             border-radius: 8px;
             color: #f3f4f6;
         }
-    """
+        </style>
+        """
+        return html.replace('</head>', f'{custom_css}</head>')
+
+    slide.add_html_transform(add_custom_css)
 
     # ========================================================================
     # Page 1: Title with Centered Layout

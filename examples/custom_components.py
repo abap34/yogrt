@@ -7,55 +7,66 @@ and register their renderers.
 
 from yogrt import create_slide, Page, Header, Text, Component, Context
 from typing import Any
+from dataclasses import dataclass
 
 
 # ============================================================================
-# Define Custom Components
+# Define Custom Component Classes
 # ============================================================================
 
-def Alert(message: str, level: str = "info", **props: Any) -> Component:
-    """
-    Alert component - displays a styled message box
+@dataclass(frozen=True)
+class AlertComponent:
+    """Alert component - displays a styled message box"""
+    message: str
+    level: str = "info"
+    key: str | None = None
 
-    Args:
-        message: Alert message
-        level: Alert level (info, warning, error, success)
-    """
-    return Component(
-        tag='alert',
-        props={'message': message, 'level': level, **props},
-        children=()
-    )
+    @property
+    def tag(self) -> str:
+        return "alert"
 
 
-def Badge(text: str, color: str = "blue", **props: Any) -> Component:
-    """
-    Badge component - displays a small label or tag
+@dataclass(frozen=True)
+class BadgeComponent:
+    """Badge component - displays a small label or tag"""
+    text: str
+    color: str = "blue"
+    key: str | None = None
 
-    Args:
-        text: Badge text
-        color: Badge color
-    """
-    return Component(
-        tag='badge',
-        props={'text': text, 'color': color, **props},
-        children=()
-    )
+    @property
+    def tag(self) -> str:
+        return "badge"
 
 
-def Card(*children: Component, title: str = "", **props: Any) -> Component:
-    """
-    Card component - a container with optional title
+@dataclass(frozen=True)
+class CardComponent:
+    """Card component - a container with optional title"""
+    children: tuple[Component | Any, ...] = ()
+    title: str = ""
+    key: str | None = None
 
-    Args:
-        *children: Child components
-        title: Card title
-    """
-    return Component(
-        tag='card',
-        props={'title': title, **props},
-        children=children
-    )
+    @property
+    def tag(self) -> str:
+        return "card"
+
+
+# ============================================================================
+# Factory Functions
+# ============================================================================
+
+def Alert(message: str, level: str = "info", **kwargs: Any) -> AlertComponent:
+    """Create an Alert component"""
+    return AlertComponent(message=message, level=level, key=kwargs.get('key'))
+
+
+def Badge(text: str, color: str = "blue", **kwargs: Any) -> BadgeComponent:
+    """Create a Badge component"""
+    return BadgeComponent(text=text, color=color, key=kwargs.get('key'))
+
+
+def Card(*children: Component | Any, title: str = "", **kwargs: Any) -> CardComponent:
+    """Create a Card component"""
+    return CardComponent(children=children, title=title, key=kwargs.get('key'))
 
 
 # ============================================================================
@@ -64,8 +75,11 @@ def Card(*children: Component, title: str = "", **props: Any) -> Component:
 
 def render_alert(component: Component, context: Context) -> str:
     """Render Alert component"""
-    message = component.props['message']
-    level = component.props['level']
+    # Cast to our custom component type for attribute access
+    assert isinstance(component, AlertComponent)
+
+    message = component.message
+    level = component.level
 
     # Color scheme for different levels
     colors = {
@@ -93,8 +107,10 @@ def render_alert(component: Component, context: Context) -> str:
 
 def render_badge(component: Component, context: Context) -> str:
     """Render Badge component"""
-    text = component.props['text']
-    color = component.props['color']
+    assert isinstance(component, BadgeComponent)
+
+    text = component.text
+    color = component.color
 
     colors = {
         'blue': '#3b82f6',
@@ -124,8 +140,10 @@ def render_card(component: Component, context: Context) -> str:
     """Render Card component"""
     from yogrt import render
 
-    title = component.props.get('title', '')
-    children_html = [render(child, context) for child in component.children]
+    assert isinstance(component, CardComponent)
+
+    title = component.title
+    children_html = [render(child, context) for child in component.children]  # type: ignore[arg-type]
 
     title_html = f'<h3 style="margin-top: 0; color: #1f2937;">{title}</h3>' if title else ''
 
