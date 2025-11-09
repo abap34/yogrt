@@ -50,18 +50,14 @@ def slide_navigation_plugin() -> Plugin:
         """Add JavaScript for slide navigation"""
         js_code = """
 <style>
-/* Full-screen slide styles */
 body {
     margin: 0;
     padding: 0;
     overflow: hidden !important;
 }
 
-/* Before JavaScript initialization, hide all pages except when being wrapped */
-body:not(.slide-mode) .page {
-    position: absolute;
-    left: -9999px;
-    visibility: hidden;
+.page {
+    display: none !important;
 }
 
 .slide-container {
@@ -74,28 +70,19 @@ body:not(.slide-mode) .page {
 }
 
 .slide-page {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: none; /* Hide all slides by default */
-    overflow: auto;
+    display: none;
 }
 
-.slide-page .page {
-    position: relative !important;
-    left: auto !important;
-    visibility: visible !important;
-    display: flex;
+.slide-page.active {
+    display: block;
+}
+
+.slide-page.active .page {
+    display: flex !important;
     flex-direction: column;
     width: 100%;
     height: 100%;
     padding: 2rem;
-}
-
-.slide-page.active {
-    display: block; /* Show only active slide */
 }
 
 .slide-indicator {
@@ -153,42 +140,32 @@ body:not(.slide-mode) .page {
     let slides = [];
 
     function initSlides() {
-        // Find all page divs
         const pages = Array.from(document.querySelectorAll('.page'));
-
         if (pages.length === 0) return;
 
-        // Create slide container
         const container = document.createElement('div');
         container.className = 'slide-container';
         document.body.insertBefore(container, document.body.firstChild);
 
-        // Wrap each page in a slide-page div
         pages.forEach((page, index) => {
             const slideDiv = document.createElement('div');
             slideDiv.className = 'slide-page';
             slideDiv.dataset.slideIndex = index;
 
-            // Remove page from its current position
             if (page.parentNode) {
                 page.parentNode.removeChild(page);
             }
 
-            // Add page to slide div
             slideDiv.appendChild(page);
             slides.push(slideDiv);
-
-            // Add to container
             container.appendChild(slideDiv);
         });
 
-        // Add indicator
         const indicator = document.createElement('div');
         indicator.className = 'slide-indicator';
         indicator.id = 'slide-indicator';
         document.body.appendChild(indicator);
 
-        // Add controls
         const controls = document.createElement('div');
         controls.className = 'slide-controls';
         controls.innerHTML = `
@@ -198,47 +175,36 @@ body:not(.slide-mode) .page {
         `;
         document.body.appendChild(controls);
 
-        // Setup controls
         document.getElementById('prev-slide').addEventListener('click', () => goToSlide(currentSlide - 1));
         document.getElementById('next-slide').addEventListener('click', () => goToSlide(currentSlide + 1));
 
-        // Enable slide mode
-        document.body.classList.add('slide-mode');
-
-        // Show first slide
         goToSlide(0);
     }
 
     function goToSlide(index) {
         if (index < 0 || index >= slides.length) return;
 
-        // Hide all slides
         slides.forEach(slide => slide.classList.remove('active'));
 
-        // Show current slide
         currentSlide = index;
         slides[currentSlide].classList.add('active');
 
-        // Update indicator
         const indicator = document.getElementById('slide-indicator');
         if (indicator) {
             indicator.textContent = `${currentSlide + 1} / ${slides.length}`;
         }
 
-        // Update slide number
         const slideNumber = document.getElementById('slide-number');
         if (slideNumber) {
             slideNumber.textContent = `${currentSlide + 1} / ${slides.length}`;
         }
 
-        // Update button states
         const prevBtn = document.getElementById('prev-slide');
         const nextBtn = document.getElementById('next-slide');
         if (prevBtn) prevBtn.disabled = currentSlide === 0;
         if (nextBtn) nextBtn.disabled = currentSlide === slides.length - 1;
     }
 
-    // Keyboard navigation
     document.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
             e.preventDefault();
@@ -255,7 +221,6 @@ body:not(.slide-mode) .page {
         }
     });
 
-    // Initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initSlides);
     } else {
@@ -315,7 +280,6 @@ def speaker_notes_plugin() -> Plugin:
         """Add JavaScript for presenter mode"""
         js_code = """
 <style>
-/* Presenter mode styles */
 .presenter-mode {
     display: none;
     position: fixed;
@@ -413,10 +377,7 @@ def speaker_notes_plugin() -> Plugin:
         presenterMode = !presenterMode;
         const presenterDiv = document.getElementById('presenter-mode');
 
-        if (!presenterDiv) {
-            console.error('Presenter mode div not found');
-            return;
-        }
+        if (!presenterDiv) return;
 
         if (presenterMode) {
             presenterDiv.classList.add('active');
@@ -429,19 +390,16 @@ def speaker_notes_plugin() -> Plugin:
     function updatePresenterView() {
         if (!presenterMode) return;
 
-        // Find current active slide
         const activeSlide = document.querySelector('.slide-page.active');
         if (!activeSlide) return;
 
         const currentIndex = parseInt(activeSlide.dataset.slideIndex);
         const allSlides = document.querySelectorAll('.slide-page');
 
-        // Current slide
         const currentContent = activeSlide.cloneNode(true);
         document.getElementById('presenter-current-slide').innerHTML = '';
         document.getElementById('presenter-current-slide').appendChild(currentContent);
 
-        // Speaker notes
         const notes = activeSlide.querySelectorAll('.speaker-note');
         const notesContent = document.getElementById('presenter-notes-content');
         notesContent.innerHTML = '';
@@ -456,7 +414,6 @@ def speaker_notes_plugin() -> Plugin:
             notesContent.innerHTML = '<p style="color: #9ca3af;">No notes for this slide.</p>';
         }
 
-        // Next slide
         const nextSlide = allSlides[currentIndex + 1];
         const nextContent = document.getElementById('presenter-next-slide');
         nextContent.innerHTML = '';
@@ -469,7 +426,6 @@ def speaker_notes_plugin() -> Plugin:
         }
     }
 
-    // Keyboard shortcut
     document.addEventListener('keydown', (e) => {
         if (e.key === 'p' || e.key === 'P') {
             e.preventDefault();
@@ -477,13 +433,11 @@ def speaker_notes_plugin() -> Plugin:
         }
     });
 
-    // Button click - wait for DOM
     const presenterToggleBtn = document.getElementById('presenter-toggle');
     if (presenterToggleBtn) {
         presenterToggleBtn.addEventListener('click', togglePresenterMode);
     }
 
-    // Update presenter view when slide changes
     document.addEventListener('keydown', (e) => {
         if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', ' '].includes(e.key)) {
             setTimeout(updatePresenterView, 100);
@@ -534,7 +488,6 @@ def syntax_highlighting_plugin(
     def add_syntax_highlighting(html: str) -> str:
         """Add highlight.js for syntax highlighting"""
 
-        # Theme mapping
         theme_urls = {
             'default': 'default',
             'monokai': 'monokai',
@@ -551,7 +504,6 @@ def syntax_highlighting_plugin(
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
 
 <style>
-/* Code block enhancements */
 .code-container {{
     position: relative;
     margin: 1rem 0;
@@ -604,21 +556,17 @@ pre code.hljs {{
 </style>
 
 <script>
-// Initialize highlight.js
 document.addEventListener('DOMContentLoaded', (event) => {{
-    // Highlight all code blocks
     document.querySelectorAll('pre code').forEach((block) => {{
         hljs.highlightElement(block);
     }});
 
-    // Add copy buttons
     document.querySelectorAll('.code-copy-btn').forEach((btn) => {{
         btn.addEventListener('click', function() {{
             const codeBlock = this.closest('.code-container').querySelector('code');
             const text = codeBlock.textContent;
 
             navigator.clipboard.writeText(text).then(() => {{
-                // Show feedback
                 this.textContent = '✓ Copied!';
                 this.classList.add('copied');
 
