@@ -260,16 +260,35 @@ yogrt/
 # Install with dev dependencies using uv
 uv pip install -e .
 
-# Run tests
-pytest
+# Run tests (excludes browser tests)
+pytest -m "not browser"
 
 # Run tests with coverage
-pytest --cov=yogrt --cov-report=term-missing
+pytest -m "not browser" --cov=yogrt --cov-report=term-missing
 
 # Type checking (strict mode)
-mypy yogrt
+mypy yogrt tests/
 
 # All tests must pass, all types must check
+```
+
+### Browser Tests (Optional)
+
+HTML/JavaScript tests using Playwright to verify navigation and presenter mode in a real browser:
+
+```bash
+# Install Playwright
+pip install playwright pytest-playwright
+python -m playwright install chromium
+
+# Run browser tests (headless)
+pytest tests/test_stdlib_plugins_browser.py
+
+# Run browser tests (visible browser)
+pytest tests/test_stdlib_plugins_browser.py --headed
+
+# Run all browser tests with marker
+pytest -m browser --headed
 ```
 
 ### Development Requirements
@@ -279,6 +298,7 @@ mypy yogrt
 - pytest for testing
 - mypy for type checking
 - matplotlib (optional, for data visualization)
+- playwright (optional, for browser tests)
 
 ## Why "Yogrt"?
 

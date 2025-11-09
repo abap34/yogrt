@@ -8,9 +8,13 @@ To run these tests, you need to install Playwright:
 Then run:
     pytest tests/test_stdlib_plugins_browser.py --headed  # To see browser
     pytest tests/test_stdlib_plugins_browser.py           # Headless mode
+    pytest -m browser --headed                             # Run all browser tests
+    pytest -m "not browser"                                # Skip browser tests
 """
 
 import pytest
+
+pytestmark = pytest.mark.browser
 from pathlib import Path
 from playwright.sync_api import Page, expect
 
